@@ -12,7 +12,7 @@ export default defineConfig({
     include: ['react', 'react-dom', 'react/jsx-runtime'],
   },
   server: {
-    port: 5173,
+    port: Number(process.env.PORT) || 5173,
     proxy: {
       '/api': 'http://localhost:9998',
       '/uploads': 'http://localhost:9998',

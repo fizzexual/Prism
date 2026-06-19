@@ -1,0 +1,154 @@
+import { useEffect } from 'react';
+import { useStore } from 'zustand';
+import { Undo2, Redo2, Monitor, Tablet, Smartphone, Eye, Trash2, Copy } from 'lucide-react';
+import { useBuilder, useUI } from './store.js';
+import { defaultProject, findParentId } from './model.js';
+import { COMPONENTS, COMPONENT_LIST, isContainer } from './components.jsx';
+import { BREAKPOINTS } from './cssGen.js';
+import Canvas from './Canvas.jsx';
+
+const BP_ICONS = { base: Monitor, tablet: Tablet, mobile: Smartphone };
+
+function addComponent(component) {
+  const { project } = useBuilder.getState();
+  const { selectedId } = useUI.getState();
+  const rootId = project.pages[0].rootId;
+  let parentId = rootId;
+  let index;
+  if (selectedId && project.instances[selectedId]) {
+    const sel = project.instances[selectedId];
+    if (isContainer(sel.component)) {
+      parentId = selectedId;
+    } else {
+      const pid = findParentId(project.instances, selectedId);
+      if (pid) {
+        parentId = pid;
+        index = project.instances[pid].children.indexOf(selectedId) + 1;
+      }
+    }
+  }
+  const id = useBuilder.getState().insert(component, parentId, index);
+  useUI.getState().select(id);
+}
+
+export default function BuilderApp() {
+  const project = useBuilder((s) => s.project);
+  const breakpoint = useUI((s) => s.breakpoint);
+  const previewMode = useUI((s) => s.previewMode);
+  const selectedId = useUI((s) => s.selectedId);
+  const past = useStore(useBuilder.temporal, (s) => s.pastStates.length);
+  const future = useStore(useBuilder.temporal, (s) => s.futureStates.length);
+
+  useEffect(() => {
+    if (!project) useBuilder.getState().loadProject(defaultProject());
+  }, [project]);
+
+  // Keyboard: delete / undo / redo
+  useEffect(() => {
+    const onKey = (e) => {
+      const ae = document.activeElement;
+      if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+      const meta = e.ctrlKey || e.metaKey;
+      const t = useBuilder.temporal.getState();
+      if (meta && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? t.redo() : t.undo(); return; }
+      if (meta && e.key.toLowerCase() === 'y') { e.preventDefault(); t.redo(); return; }
+      const sel = useUI.getState().selectedId;
+      if (sel && (e.key === 'Delete' || e.key === 'Backspace')) {
+        e.preventDefault();
+        useBuilder.getState().remove(sel);
+        useUI.getState().select(null);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  if (!project) return null;
+  const temporal = useBuilder.temporal.getState();
+  const selected = selectedId ? project.instances[selectedId] : null;
+
+  return (
+    <div className="flex h-full flex-col bg-neutral-100 text-neutral-900">
+      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-neutral-200 bg-white px-3">
+        <div className="flex items-center gap-2 pr-2">
+          <div className="h-5 w-5 rounded bg-gradient-to-br from-indigo-500 to-fuchsia-500" />
+          <span className="font-semibold tracking-tight">Prism</span>
+        </div>
+        <div className="flex items-center gap-0.5">
+          <button disabled={!past} onClick={() => temporal.undo()} className="grid h-8 w-8 place-items-center rounded-md text-neutral-600 hover:bg-neutral-100 disabled:opacity-30" title="Undo">
+            <Undo2 size={16} />
+          </button>
+          <button disabled={!future} onClick={() => temporal.redo()} className="grid h-8 w-8 place-items-center rounded-md text-neutral-600 hover:bg-neutral-100 disabled:opacity-30" title="Redo">
+            <Redo2 size={16} />
+          </button>
+        </div>
+        <div className="mx-auto flex items-center gap-0.5 rounded-lg bg-neutral-100 p-0.5">
+          {Object.entries(BREAKPOINTS).map(([key, bp]) => {
+            const Icon = BP_ICONS[key];
+            return (
+              <button key={key} onClick={() => useUI.getState().setBreakpoint(key)} title={`${bp.label} (${bp.width}px)`}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs ${breakpoint === key ? 'bg-white text-indigo-600 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'}`}>
+                <Icon size={14} />
+              </button>
+            );
+          })}
+        </div>
+        <button onClick={() => useUI.getState().setPreview(!previewMode)}
+          className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium ${previewMode ? 'bg-indigo-600 text-white' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'}`}>
+          <Eye size={14} /> Preview
+        </button>
+      </header>
+
+      <div className="flex min-h-0 flex-1">
+        {!previewMode && (
+          <aside className="w-52 shrink-0 border-r border-neutral-200 bg-white p-2">
+            <div className="px-1 pb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">Add</div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {COMPONENT_LIST.map((c) => {
+                const Icon = COMPONENTS[c].icon;
+                return (
+                  <button key={c} onClick={() => addComponent(c)}
+                    className="flex flex-col items-center gap-1 rounded-lg border border-neutral-200 bg-neutral-50 py-2.5 text-[11px] text-neutral-600 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700">
+                    <Icon size={16} />
+                    {COMPONENTS[c].label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-3 px-1 text-[10px] leading-relaxed text-neutral-400">
+              Adds inside the selected box, or after the selected element.
+            </p>
+          </aside>
+        )}
+
+        <Canvas />
+
+        {!previewMode && (
+          <aside className="w-72 shrink-0 border-l border-neutral-200 bg-white p-3 text-sm">
+            {selected ? (
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="font-medium text-neutral-800">{selected.label}</span>
+                  <span className="text-[11px] text-neutral-400">{selected.component}</span>
+                </div>
+                <div className="flex gap-1.5">
+                  <button onClick={() => { const id = useBuilder.getState().duplicate(selectedId); if (id) useUI.getState().select(id); }}
+                    className="flex items-center gap-1 rounded-md border border-neutral-200 px-2 py-1 text-xs text-neutral-600 hover:bg-neutral-50">
+                    <Copy size={12} /> Duplicate
+                  </button>
+                  <button onClick={() => { useBuilder.getState().remove(selectedId); useUI.getState().select(null); }}
+                    className="flex items-center gap-1 rounded-md border border-neutral-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50">
+                    <Trash2 size={12} /> Delete
+                  </button>
+                </div>
+                <p className="mt-3 text-[11px] text-neutral-400">Style controls arrive in the next step.</p>
+              </div>
+            ) : (
+              <p className="text-center text-xs text-neutral-400">Select an element on the canvas.</p>
+            )}
+          </aside>
+        )}
+      </div>
+    </div>
+  );
+}

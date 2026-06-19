@@ -1,22 +1,18 @@
-import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App.jsx';
+import BuilderApp from './builder/BuilderApp.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import './index.css';
-import { useDocumentStore } from './state/documentStore.js';
-import { useEditorStore } from './state/editorStore.js';
-import { createElement } from './elements/registry.jsx';
-import { exportProject } from './export/exportProject.js';
+import { useBuilder, useUI } from './builder/store.js';
 
 // Expose stores in dev for debugging and automated verification.
 if (import.meta.env.DEV) {
-  window.__prism = { useDocumentStore, useEditorStore, createElement, exportProject };
+  window.__prism = { useBuilder, useUI };
 }
 
+// NOTE: StrictMode is intentionally omitted — the iframe canvas does imperative
+// document setup that doesn't play well with StrictMode's double-invoked effects.
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </React.StrictMode>,
+  <ErrorBoundary>
+    <BuilderApp />
+  </ErrorBoundary>,
 );
