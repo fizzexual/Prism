@@ -43,6 +43,18 @@ export function TextField({ value, onChange, placeholder }) {
   );
 }
 
+export function TextAreaField({ value, onChange, placeholder }) {
+  return (
+    <textarea
+      value={value ?? ''}
+      placeholder={placeholder}
+      rows={3}
+      onChange={(e) => onChange(e.target.value)}
+      className={`${inputCls} resize-none`}
+    />
+  );
+}
+
 export function NumberField({ value, onChange, step = 1, min, max }) {
   return (
     <input

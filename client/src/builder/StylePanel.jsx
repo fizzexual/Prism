@@ -1,7 +1,59 @@
 import { AlignLeft, AlignCenter, AlignRight, AlignJustify, ArrowRight, ArrowDown, Copy, Trash2 } from 'lucide-react';
 import { useBuilder, useUI } from './store.js';
 import { effectiveStyle, isSetAt } from './styleUtils.js';
-import { Section, Field, LengthField, PxField, NumberField, SelectField, Segmented, ColorField, TextField } from './controls.jsx';
+import { Section, Field, LengthField, PxField, NumberField, SelectField, Segmented, ColorField, TextField, TextAreaField } from './controls.jsx';
+
+function fileToDataUrl(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+function ContentSection({ inst }) {
+  const setProp = (prop, value) => useBuilder.getState().setProp(inst.id, prop, value);
+  const c = inst.component;
+
+  if (c === 'Image') {
+    return (
+      <Section title="Content">
+        <Field label="Source"><TextField value={inst.props.src} onChange={(v) => setProp('src', v)} placeholder="https://… or upload" /></Field>
+        <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-md border border-dashed border-neutral-300 px-2 py-1.5 text-xs text-neutral-600 hover:border-indigo-400 hover:text-indigo-600">
+          Upload image
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              if (f) setProp('src', await fileToDataUrl(f));
+              e.target.value = '';
+            }}
+          />
+        </label>
+        <Field label="Alt"><TextField value={inst.props.alt} onChange={(v) => setProp('alt', v)} /></Field>
+      </Section>
+    );
+  }
+  if (c === 'Link') {
+    return (
+      <Section title="Content">
+        <Field label="Text"><TextField value={inst.props.text} onChange={(v) => setProp('text', v)} /></Field>
+        <Field label="URL"><TextField value={inst.props.href} onChange={(v) => setProp('href', v)} placeholder="https://…" /></Field>
+      </Section>
+    );
+  }
+  if (c === 'Heading' || c === 'Text' || c === 'Button') {
+    return (
+      <Section title="Content">
+        <TextAreaField value={inst.props.text} onChange={(v) => setProp('text', v)} placeholder="Text…" />
+      </Section>
+    );
+  }
+  return null;
+}
 
 const FONT_FAMILIES = [
   { value: '', label: 'Default' },
@@ -80,6 +132,7 @@ export default function StylePanel() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto scroll-thin">
+        <ContentSection inst={inst} />
         <Section title="Layout">
           <Field label="Display">
             <SelectField value={display} onChange={(val) => set('display', val)} options={['', 'block', 'flex', 'inline-flex', 'inline-block', 'grid', 'none']} />
