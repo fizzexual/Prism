@@ -4,6 +4,7 @@ import { useBuilder, useUI } from './store.js';
 import { BREAKPOINTS, generateCss } from './cssGen.js';
 import { COMPONENTS } from './components.jsx';
 import { findParentId } from './model.js';
+import { effectiveStyle } from './styleUtils.js';
 import { InstanceRender } from './InstanceRender.jsx';
 import Overlay from './Overlay.jsx';
 
@@ -94,15 +95,20 @@ export default function Canvas() {
     };
     let drag = null;
 
+    const isFree = (id) => {
+      const pos = effectiveStyle(useBuilder.getState().project.styles[id] || {}, useUI.getState().breakpoint).position;
+      return pos === 'absolute' || pos === 'fixed';
+    };
     const onDown = (e) => {
       const el = e.target.closest?.('[data-ws-id]');
       const id = idOf(el);
       if (!id) { useUI.getState().select(null); return; }
       useUI.getState().select(id);
-      if (id === rootId()) return;
+      // Only "Free" (absolute) elements can be dragged on the canvas.
+      if (id === rootId() || !isFree(id)) return;
       const er = el.getBoundingClientRect();
       const rr = doc.querySelector(`[data-ws-id="${rootId()}"]`).getBoundingClientRect();
-      drag = { id, el, sx: e.clientX, sy: e.clientY, left: Math.round(er.left - rr.left), top: Math.round(er.top - rr.top), w: Math.round(er.width), h: Math.round(er.height), moved: false, z: 1 };
+      drag = { id, el, sx: e.clientX, sy: e.clientY, left: Math.round(er.left - rr.left), top: Math.round(er.top - rr.top), moved: false };
       try { el.setPointerCapture(e.pointerId); } catch { /* ignore */ }
       e.preventDefault();
     };
@@ -111,30 +117,15 @@ export default function Canvas() {
       const dx = e.clientX - drag.sx;
       const dy = e.clientY - drag.sy;
       if (!drag.moved && Math.hypot(dx, dy) < 4) return;
-      if (!drag.moved) { drag.moved = true; drag.z = nextZ(); }
-      const s = drag.el.style;
-      s.position = 'absolute';
-      s.left = `${drag.left + dx}px`;
-      s.top = `${drag.top + dy}px`;
-      s.width = `${drag.w}px`;
-      s.height = `${drag.h}px`;
-      s.margin = '0px';
-      s.zIndex = String(drag.z);
+      drag.moved = true;
+      drag.el.style.left = `${drag.left + dx}px`;
+      drag.el.style.top = `${drag.top + dy}px`;
     };
     const onUp = () => {
       if (drag && drag.moved) {
         const { id, el } = drag;
-        const bp = useUI.getState().breakpoint;
-        const rid = rootId();
-        if ((useBuilder.getState().project.styles[rid]?.base || {}).position !== 'relative') {
-          useBuilder.getState().setStyle(rid, 'base', 'position', 'relative');
-        }
-        useBuilder.getState().setStyles(id, bp, {
-          position: 'absolute', left: el.style.left, top: el.style.top, width: el.style.width, height: el.style.height, margin: '0px', 'z-index': el.style.zIndex,
-        });
-        requestAnimationFrame(() => {
-          ['position', 'left', 'top', 'width', 'height', 'margin', 'zIndex'].forEach((p) => { el.style[p] = ''; });
-        });
+        useBuilder.getState().setStyles(id, useUI.getState().breakpoint, { left: el.style.left, top: el.style.top, 'z-index': String(nextZ()) });
+        requestAnimationFrame(() => { el.style.left = ''; el.style.top = ''; });
       }
       drag = null;
     };

@@ -115,6 +115,35 @@ export default function StylePanel() {
   const position = v('position');
   const opacityPct = v('opacity') === '' ? 100 : Math.round(Number(v('opacity')) * 100);
 
+  const rootId = project.pages[0].rootId;
+  const isRoot = selectedId === rootId;
+  const isFree = position === 'absolute' || position === 'fixed';
+  const nextZ = () => {
+    let m = 0;
+    for (const st of Object.values(project.styles)) {
+      const z = parseInt(st.base?.['z-index'], 10);
+      if (!Number.isNaN(z)) m = Math.max(m, z);
+    }
+    return m + 1;
+  };
+  const makeFree = () => {
+    const doc = document.querySelector('iframe')?.contentDocument;
+    const el = doc?.querySelector(`[data-ws-id="${selectedId}"]`);
+    const rootEl = doc?.querySelector(`[data-ws-id="${rootId}"]`);
+    const decls = { position: 'absolute', margin: '0px', 'z-index': String(nextZ()) };
+    if (el && rootEl) {
+      const er = el.getBoundingClientRect();
+      const rr = rootEl.getBoundingClientRect();
+      decls.left = `${Math.round(er.left - rr.left)}px`;
+      decls.top = `${Math.round(er.top - rr.top)}px`;
+      decls.width = `${Math.round(er.width)}px`;
+      decls.height = `${Math.round(er.height)}px`;
+    }
+    if ((project.styles[rootId]?.base || {}).position !== 'relative') useBuilder.getState().setStyle(rootId, 'base', 'position', 'relative');
+    useBuilder.getState().setStyles(selectedId, breakpoint, decls);
+  };
+  const makeFlow = () => useBuilder.getState().setStyles(selectedId, breakpoint, { position: '', left: '', top: '', 'z-index': '', margin: '' });
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-neutral-100 px-3 py-2">
@@ -139,6 +168,21 @@ export default function StylePanel() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto scroll-thin">
+        {!isRoot && (
+          <div className="flex items-center justify-between border-b border-neutral-100 px-3 py-2.5">
+            <div>
+              <div className="text-xs font-medium text-neutral-700">Free position</div>
+              <div className="text-[10px] text-neutral-400">{isFree ? 'Drag & resize on canvas' : 'Flows in the layout'}</div>
+            </div>
+            <button
+              onClick={() => (isFree ? makeFlow() : makeFree())}
+              title="Toggle free positioning"
+              className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${isFree ? 'bg-indigo-600' : 'bg-neutral-300'}`}
+            >
+              <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${isFree ? 'left-[18px]' : 'left-0.5'}`} />
+            </button>
+          </div>
+        )}
         <ContentSection inst={inst} />
         <Section title="Layout">
           <Field label="Display">

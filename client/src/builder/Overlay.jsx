@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useUI, useBuilder } from './store.js';
+import { effectiveStyle } from './styleUtils.js';
 
 const HANDLES = [
   { k: 'nw', hx: -1, hy: -1, cur: 'nwse-resize' },
@@ -15,8 +16,14 @@ const HANDLES = [
 export default function Overlay({ iframeRef }) {
   const selectedId = useUI((s) => s.selectedId);
   const hoveredId = useUI((s) => s.hoveredId);
+  const breakpoint = useUI((s) => s.breakpoint);
   const instances = useBuilder((s) => s.project?.instances);
+  const stylesMap = useBuilder((s) => s.project?.styles);
   const rootId = useBuilder((s) => s.project?.pages?.[0]?.rootId);
+  const selFree =
+    selectedId && stylesMap
+      ? ['absolute', 'fixed'].includes(effectiveStyle(stylesMap[selectedId] || {}, breakpoint).position)
+      : false;
   const [, force] = useState(0);
   const resizing = useRef(null);
 
@@ -118,7 +125,7 @@ export default function Overlay({ iframeRef }) {
               {instances?.[selectedId]?.label}
             </span>
           </div>
-          {selectedId !== rootId &&
+          {selFree &&
             HANDLES.map((hd) => (
               <div
                 key={hd.k}
