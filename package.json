@@ -1,0 +1,24 @@
+{
+  "name": "prism",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Prism — a drag-and-drop website builder with first-class Three.js 3D support.",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:client": "npm -w client run dev",
+    "dev:server": "npm -w server run dev",
+    "build": "npm -w client run build",
+    "migrate": "npm -w server run migrate",
+    "test": "npm -w client run test -- --run && npm -w server run test -- --run",
+    "test:client": "npm -w client run test -- --run",
+    "test:server": "npm -w server run test -- --run"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
