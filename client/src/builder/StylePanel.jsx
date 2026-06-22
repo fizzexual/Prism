@@ -1,4 +1,4 @@
-import { AlignLeft, AlignCenter, AlignRight, AlignJustify, Copy, Trash2 } from 'lucide-react';
+import { AlignLeft, AlignCenter, AlignRight, AlignJustify, Copy, Trash2, Boxes } from 'lucide-react';
 import { useBuilder, useUI } from './store.js';
 import { getActivePage } from './model.js';
 import { ICON_SET, isContainer } from './components.jsx';
@@ -161,6 +161,50 @@ function ThemePanel({ project }) {
   );
 }
 
+function InstancePanel({ inst, project }) {
+  const comp = project.components?.[inst.props.componentId];
+  const variables = comp?.variables || [];
+  const setOv = (varId, value) => useBuilder.getState().setOverride(inst.id, varId, value);
+  const ov = inst.props.overrides || {};
+  const valOf = (v) => (ov[v.id] !== undefined ? ov[v.id] : v.default);
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between border-b border-neutral-100 px-3 py-2">
+        <div className="flex items-center gap-2">
+          <Boxes size={14} className="text-indigo-500" />
+          <span className="text-sm font-medium text-neutral-800">{comp?.name || 'Component'}</span>
+        </div>
+        <div className="flex gap-1">
+          <button onClick={() => { const id = useBuilder.getState().duplicate(inst.id); if (id) useUI.getState().select(id); }} className="grid h-6 w-6 place-items-center rounded text-neutral-500 hover:bg-neutral-100" title="Duplicate"><Copy size={13} /></button>
+          <button onClick={() => { useBuilder.getState().remove(inst.id); useUI.getState().select(null); }} className="grid h-6 w-6 place-items-center rounded text-red-500 hover:bg-red-50" title="Delete"><Trash2 size={13} /></button>
+        </div>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto scroll-thin">
+        <div className="p-3">
+          <button onClick={() => comp && useUI.getState().setEditingComponent(comp.id)} className="w-full rounded-md bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-700">Edit Component</button>
+        </div>
+        {variables.length > 0 ? (
+          <Section title="Properties">
+            {variables.map((v) => (
+              <Field key={v.id} label={v.name}>
+                {v.type === 'color' ? (
+                  <ColorField value={valOf(v) ?? ''} onChange={(val) => setOv(v.id, val)} />
+                ) : v.type === 'number' ? (
+                  <TextField value={valOf(v) ?? ''} onChange={(val) => setOv(v.id, val)} placeholder={String(v.default ?? '')} />
+                ) : (
+                  <TextField value={valOf(v) ?? ''} onChange={(val) => setOv(v.id, val)} placeholder={String(v.default ?? '')} />
+                )}
+              </Field>
+            ))}
+          </Section>
+        ) : (
+          <p className="px-3 text-[11px] leading-relaxed text-neutral-400">No editable properties yet. Click “Edit Component”, select an element inside, and expose its Text / Color / Font as variables.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function StylePanel() {
   const project = useBuilder((s) => s.project);
   const selectedId = useUI((s) => s.selectedId);
@@ -173,6 +217,7 @@ export default function StylePanel() {
   }
 
   const inst = project.instances[selectedId];
+  if (inst.component === 'Instance') return <InstancePanel inst={inst} project={project} />;
   const perId = project.styles[selectedId] || {};
   const eff = effectiveStyle(perId, breakpoint);
   const v = (prop) => eff[prop] ?? '';
@@ -191,6 +236,14 @@ export default function StylePanel() {
           {breakpoint !== 'base' && <span className="rounded bg-amber-100 px-1.5 text-[10px] text-amber-700">{breakpoint}</span>}
         </div>
         <div className="flex gap-1">
+          {!isRoot && (
+            <button
+              onClick={() => { const r = useBuilder.getState().createComponent(selectedId, inst.label || 'Component'); if (r) useUI.getState().select(r.instId); }}
+              className="grid h-6 w-6 place-items-center rounded text-neutral-500 hover:bg-neutral-100 hover:text-indigo-600" title="Create component from selection"
+            >
+              <Boxes size={13} />
+            </button>
+          )}
           <button
             onClick={() => { const id = useBuilder.getState().duplicate(selectedId); if (id) useUI.getState().select(id); }}
             className="grid h-6 w-6 place-items-center rounded text-neutral-500 hover:bg-neutral-100" title="Duplicate"

@@ -77,6 +77,7 @@ export default function DeviceFrame({ breakpoint, scale, isActive, overlayLayer 
   const styles = project?.styles;
   const previewMode = useUI((s) => s.previewMode);
   const activePageId = useUI((s) => s.activePageId);
+  const editingComponentId = useUI((s) => s.editingComponentId);
 
   const iframeRef = useRef(null);
   const wsStyleRef = useRef(null);
@@ -89,6 +90,8 @@ export default function DeviceFrame({ breakpoint, scale, isActive, overlayLayer 
 
   const width = BREAKPOINTS[breakpoint]?.width || 1280;
   const page = getActivePage(project, activePageId);
+  const components = project?.components || {};
+  const rootId = editingComponentId ? components[editingComponentId]?.rootId : page?.rootId;
 
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -130,7 +133,11 @@ export default function DeviceFrame({ breakpoint, scale, isActive, overlayLayer 
     const doc = iframeRef.current?.contentDocument;
     if (!doc || previewMode) return undefined;
     const idOf = (el) => el?.closest?.('[data-ws-id]')?.getAttribute('data-ws-id') || null;
-    const rootId = () => getActivePage(useBuilder.getState().project, useUI.getState().activePageId).rootId;
+    const rootId = () => {
+      const u = useUI.getState();
+      const pr = useBuilder.getState().project;
+      return u.editingComponentId ? pr.components?.[u.editingComponentId]?.rootId : getActivePage(pr, u.activePageId).rootId;
+    };
     const activate = () => { if (useUI.getState().breakpoint !== breakpoint) useUI.getState().setBreakpoint(breakpoint); };
     const nextZ = () => {
       let max = 0;
@@ -249,7 +256,11 @@ export default function DeviceFrame({ breakpoint, scale, isActive, overlayLayer 
   useEffect(() => {
     const doc = iframeRef.current?.contentDocument;
     if (!doc || previewMode) return undefined;
-    const rootId = () => getActivePage(useBuilder.getState().project, useUI.getState().activePageId).rootId;
+    const rootId = () => {
+      const u = useUI.getState();
+      const pr = useBuilder.getState().project;
+      return u.editingComponentId ? pr.components?.[u.editingComponentId]?.rootId : getActivePage(pr, u.activePageId).rootId;
+    };
     const onDragOver = (e) => {
       if (!Array.from(e.dataTransfer.types).includes(DRAG_TYPE)) return;
       e.preventDefault();
@@ -332,7 +343,7 @@ export default function DeviceFrame({ breakpoint, scale, isActive, overlayLayer 
           <iframe ref={iframeRef} title={`Canvas ${breakpoint}`} className="block w-full border-0" style={{ minHeight: 400 }} />
         </div>
       </div>
-      {mountNode && project && page && createPortal(<InstanceRender id={page.rootId} instances={project.instances} />, mountNode)}
+      {mountNode && project && rootId && createPortal(<InstanceRender id={rootId} instances={project.instances} components={components} />, mountNode)}
       {overlayLayer && createPortal(
         <>
           {isActive && !previewMode && <Overlay iframeRef={iframeRef} scale={scale} />}

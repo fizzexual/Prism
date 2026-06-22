@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Hand, Minus, Plus, Maximize } from 'lucide-react';
+import { Hand, Minus, Plus, Maximize, Boxes } from 'lucide-react';
 import { useBuilder, useUI } from './store.js';
 import { BREAKPOINTS } from './cssGen.js';
 import DeviceFrame from './DeviceFrame.jsx';
@@ -12,6 +12,8 @@ export default function Canvas() {
   const project = useBuilder((s) => s.project);
   const breakpoint = useUI((s) => s.breakpoint);
   const previewMode = useUI((s) => s.previewMode);
+  const editingComponentId = useUI((s) => s.editingComponentId);
+  const editingComp = editingComponentId ? project?.components?.[editingComponentId] : null;
 
   const surfaceRef = useRef(null);
   const [overlayLayer, setOverlayLayer] = useState(null);
@@ -111,6 +113,13 @@ export default function Canvas() {
 
       {/* Decoration layer (selection/handles/guides) — outside the transform so position:fixed stays in screen px. */}
       <div ref={setOverlayLayer} className="pointer-events-none absolute inset-0" />
+
+      {editingComp && (
+        <div className="absolute left-1/2 top-3 z-40 flex -translate-x-1/2 items-center gap-3 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-lg">
+          <span className="flex items-center gap-1.5"><Boxes size={13} /> Editing component: {editingComp.name}</span>
+          <button onClick={() => useUI.getState().setEditingComponent(null)} className="rounded bg-white/20 px-2 py-0.5 hover:bg-white/30">Done</button>
+        </div>
+      )}
 
       {/* Pan capture layer. */}
       {panActive && (

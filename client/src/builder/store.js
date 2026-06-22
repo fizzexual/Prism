@@ -15,7 +15,7 @@ export const useBuilder = create(
       project: null,
 
       loadProject(project) {
-        set({ project });
+        set({ project: { ...project, components: project.components || {} } });
         useBuilder.temporal.getState().clear();
       },
 
@@ -156,6 +156,85 @@ export const useBuilder = create(
         });
       },
 
+      /**
+       * Turn an existing node's subtree into a reusable component: the subtree
+       * becomes the master, and the node is replaced in its parent by an instance
+       * that references the component. Returns { compId, instId }.
+       */
+      createComponent(nodeId, name = 'Component') {
+        let result = null;
+        set((s) => {
+          if (!s.project) return s;
+          const parentId = findParentId(s.project.instances, nodeId);
+          if (!parentId) return s; // can't componentize a page/master root
+          const compId = newId('comp');
+          const instId = newId('i');
+          const instances = { ...s.project.instances };
+          const styles = { ...s.project.styles };
+          instances[instId] = { id: instId, component: 'Instance', label: name, props: { componentId: compId, overrides: {} }, children: [] };
+          styles[instId] = {};
+          instances[parentId] = { ...instances[parentId], children: instances[parentId].children.map((c) => (c === nodeId ? instId : c)) };
+          const components = { ...(s.project.components || {}), [compId]: { id: compId, name, rootId: nodeId, variables: [] } };
+          result = { compId, instId };
+          return { project: { ...s.project, instances, styles, components } };
+        });
+        return result;
+      },
+
+      /** Insert a new instance of a component under parentId at index. Returns the instance id. */
+      addComponentInstance(compId, parentId, index) {
+        let instId = null;
+        set((s) => {
+          if (!s.project || !(s.project.components || {})[compId] || !s.project.instances[parentId]) return s;
+          instId = newId('i');
+          const inst = { id: instId, component: 'Instance', label: s.project.components[compId].name, props: { componentId: compId, overrides: {} }, children: [] };
+          const instances = { ...s.project.instances, [instId]: inst };
+          const styles = { ...s.project.styles, [instId]: {} };
+          const parent = { ...instances[parentId] };
+          const kids = [...parent.children];
+          kids.splice(index ?? kids.length, 0, instId);
+          parent.children = kids;
+          instances[parentId] = parent;
+          return { project: { ...s.project, instances, styles } };
+        });
+        return instId;
+      },
+
+      /** Set a component's exposed variables ([{id,name,type,default}]). */
+      setComponentVariables(compId, variables) {
+        set((s) => {
+          if (!s.project || !(s.project.components || {})[compId]) return s;
+          const components = { ...s.project.components, [compId]: { ...s.project.components[compId], variables } };
+          return { project: { ...s.project, components } };
+        });
+      },
+
+      /** Bind a master node's prop to a variable (or clear with varId=''). */
+      setBinding(nodeId, prop, varId) {
+        set((s) => {
+          if (!s.project) return s;
+          const inst = s.project.instances[nodeId];
+          if (!inst) return s;
+          const bindings = { ...(inst.bindings || {}) };
+          if (varId) bindings[prop] = varId; else delete bindings[prop];
+          const instances = { ...s.project.instances, [nodeId]: { ...inst, bindings } };
+          return { project: { ...s.project, instances } };
+        });
+      },
+
+      /** Set one variable override on an instance node (clear with value=undefined). */
+      setOverride(instId, varId, value) {
+        set((s) => {
+          if (!s.project) return s;
+          const inst = s.project.instances[instId];
+          if (!inst) return s;
+          const overrides = { ...(inst.props.overrides || {}) };
+          if (value === undefined) delete overrides[varId]; else overrides[varId] = value;
+          const instances = { ...s.project.instances, [instId]: { ...inst, props: { ...inst.props, overrides } } };
+          return { project: { ...s.project, instances } };
+        });
+      },
+
       addPage(name = 'Page') {
         const body = createInstance('Body');
         const pageId = newId('page');
@@ -242,7 +321,9 @@ export const useUI = create((set) => ({
   saveStatus: 'idle', // 'idle' | 'saving' | 'cloud' | 'local'
   menu: null, // { x, y, id } context menu
   activePageId: null,
-  setActivePage: (activePageId) => set({ activePageId, selectedId: null, menu: null }),
+  editingComponentId: null, // when set, the canvas edits a component master instead of a page
+  setActivePage: (activePageId) => set({ activePageId, selectedId: null, menu: null, editingComponentId: null }),
+  setEditingComponent: (editingComponentId) => set({ editingComponentId, selectedId: null, menu: null }),
   select: (id) => set({ selectedId: id }),
   hover: (id) => set({ hoveredId: id }),
   setBreakpoint: (breakpoint) => set({ breakpoint }),
