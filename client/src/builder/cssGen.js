@@ -24,7 +24,7 @@ export function declarationsToCss(decls = {}) {
  * selector(id) lets callers choose the rule selector (editor uses data-ws-id,
  * export uses a clean class).
  */
-export function generateCss(styles = {}, selector = (id) => `[data-ws-id="${id}"]`) {
+export function generateCss(styles = {}, selector = (id) => `.s-${id}`) {
   const byBp = { base: [], tablet: [], mobile: [] };
   for (const [id, perBp] of Object.entries(styles)) {
     for (const bp of ORDER) {

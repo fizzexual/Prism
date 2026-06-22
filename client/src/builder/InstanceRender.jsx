@@ -15,7 +15,9 @@ export function InstanceRender({ id, instances }) {
   const def = COMPONENTS[inst.component];
   if (!def) return null;
   const Tag = def.tag;
-  const common = { 'data-ws-id': id };
+  // data-ws-id = identity/selection (unique); class s-<id> = styling (shared by
+  // component instances). Decoupling the two is what makes components possible.
+  const common = { 'data-ws-id': id, className: `s-${id}` };
 
   switch (inst.component) {
     case 'Image':
