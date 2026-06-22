@@ -1,5 +1,6 @@
-import { AlignLeft, AlignCenter, AlignRight, AlignJustify, Copy, Trash2, Boxes } from 'lucide-react';
+import { AlignLeft, AlignCenter, AlignRight, AlignJustify, Copy, Trash2, Boxes, X } from 'lucide-react';
 import { useBuilder, useUI } from './store.js';
+import { newId } from '../lib/ids.js';
 import { getActivePage } from './model.js';
 import { ICON_SET, isContainer } from './components.jsx';
 import { effectiveStyle } from './styleUtils.js';
@@ -205,9 +206,60 @@ function InstancePanel({ inst, project }) {
   );
 }
 
+// Shown while editing a component master: expose a node's props as component variables.
+function VariablesBindingSection({ inst, comp, eff }) {
+  const isText = ['Heading', 'Text', 'Button', 'Link', 'Quote'].includes(inst.component);
+  const rows = [
+    isText && { prop: 'text', label: 'Text', type: 'text', def: inst.props.text || '' },
+    { prop: 'color', label: 'Color', type: 'color', def: eff.color || '' },
+    { prop: 'background-color', label: 'Background', type: 'color', def: eff['background-color'] || '' },
+    { prop: 'font-size', label: 'Font size', type: 'text', def: eff['font-size'] || '' },
+    { prop: 'font-family', label: 'Font', type: 'text', def: eff['font-family'] || '' },
+  ].filter(Boolean);
+  const bindings = inst.bindings || {};
+  const varById = Object.fromEntries((comp.variables || []).map((v) => [v.id, v]));
+
+  const expose = (row) => {
+    const varId = newId('var');
+    useBuilder.getState().setComponentVariables(comp.id, [...(comp.variables || []), { id: varId, name: row.label, type: row.type, default: row.def }]);
+    useBuilder.getState().setBinding(inst.id, row.prop, varId);
+  };
+  const unexpose = (row) => {
+    const varId = bindings[row.prop];
+    useBuilder.getState().setBinding(inst.id, row.prop, '');
+    const stillUsed = Object.values(useBuilder.getState().project.instances).some((n) => n.bindings && Object.values(n.bindings).includes(varId));
+    if (!stillUsed) useBuilder.getState().setComponentVariables(comp.id, (comp.variables || []).filter((v) => v.id !== varId));
+  };
+  const rename = (varId, name) => useBuilder.getState().setComponentVariables(comp.id, comp.variables.map((v) => (v.id === varId ? { ...v, name } : v)));
+
+  return (
+    <Section title="Component variables">
+      <p className="-mt-1 mb-1 text-[10px] leading-relaxed text-neutral-400">Expose a property so each instance can override it.</p>
+      {rows.map((row) => {
+        const bound = bindings[row.prop];
+        const v = bound && varById[bound];
+        return (
+          <div key={row.prop} className="flex items-center gap-2">
+            <span className="w-16 shrink-0 text-[11px] text-neutral-400">{row.label}</span>
+            {bound ? (
+              <>
+                <input value={v?.name || ''} onChange={(e) => rename(bound, e.target.value)} className="min-w-0 flex-1 rounded border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs text-indigo-700 outline-none" />
+                <button onClick={() => unexpose(row)} title="Remove variable" className="shrink-0 text-neutral-300 hover:text-red-500"><X size={13} /></button>
+              </>
+            ) : (
+              <button onClick={() => expose(row)} className="flex-1 rounded border border-dashed border-neutral-300 px-2 py-1 text-left text-[11px] text-neutral-500 hover:border-indigo-400 hover:text-indigo-600">Expose</button>
+            )}
+          </div>
+        );
+      })}
+    </Section>
+  );
+}
+
 export default function StylePanel() {
   const project = useBuilder((s) => s.project);
   const selectedId = useUI((s) => s.selectedId);
+  const editingComponentId = useUI((s) => s.editingComponentId);
   const breakpoint = useUI((s) => s.breakpoint);
   const activePageId = useUI((s) => s.activePageId);
 
@@ -224,6 +276,7 @@ export default function StylePanel() {
   const set = (prop, value) => useBuilder.getState().setStyle(selectedId, breakpoint, prop, value);
   const setMany = (decls) => useBuilder.getState().setStyles(selectedId, breakpoint, decls);
   const ctx = parentContext(project, selectedId, breakpoint);
+  const editingComp = editingComponentId ? project.components?.[editingComponentId] : null;
 
   const rootId = getActivePage(project, activePageId).rootId;
   const isRoot = selectedId === rootId;
@@ -261,6 +314,7 @@ export default function StylePanel() {
 
       <div className="min-h-0 flex-1 overflow-y-auto scroll-thin">
         {!isRoot && <AlignToolbar ctx={ctx} setMany={setMany} />}
+        {editingComp && <VariablesBindingSection inst={inst} comp={editingComp} eff={eff} />}
         <ContentSection inst={inst} />
         {isContainer(inst.component) && <LayoutSection eff={eff} set={set} setMany={setMany} />}
 
