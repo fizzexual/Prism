@@ -56,6 +56,7 @@ export const useBuilder = create(
       remove(id) {
         set((s) => {
           if (!s.project || s.project.pages.some((p) => p.rootId === id)) return s;
+          if (Object.values(s.project.components || {}).some((c) => c.rootId === id)) return s; // don't orphan a component
           const ids = collectSubtree(s.project.instances, id);
           const instances = { ...s.project.instances };
           const styles = { ...s.project.styles };
@@ -198,6 +199,34 @@ export const useBuilder = create(
           return { project: { ...s.project, instances, styles } };
         });
         return instId;
+      },
+
+      renameComponent(compId, name) {
+        set((s) => {
+          if (!s.project || !s.project.components?.[compId]) return s;
+          return { project: { ...s.project, components: { ...s.project.components, [compId]: { ...s.project.components[compId], name } } } };
+        });
+      },
+
+      /** Delete a component: its master subtree and every instance that references it. */
+      removeComponent(compId) {
+        set((s) => {
+          if (!s.project || !s.project.components?.[compId]) return s;
+          const comp = s.project.components[compId];
+          const instances = { ...s.project.instances };
+          const styles = { ...s.project.styles };
+          for (const i of collectSubtree(instances, comp.rootId)) { delete instances[i]; delete styles[i]; }
+          const instIds = Object.values(instances).filter((n) => n.component === 'Instance' && n.props?.componentId === compId).map((n) => n.id);
+          for (const id of instIds) {
+            const pid = findParentId(instances, id);
+            if (pid && instances[pid]) instances[pid] = { ...instances[pid], children: instances[pid].children.filter((c) => c !== id) };
+            delete instances[id];
+            delete styles[id];
+          }
+          const components = { ...s.project.components };
+          delete components[compId];
+          return { project: { ...s.project, instances, styles, components } };
+        });
       },
 
       /** Set a component's exposed variables ([{id,name,type,default}]). */

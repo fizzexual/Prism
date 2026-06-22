@@ -46,7 +46,8 @@ function NavNode({ id, depth, collapsed, toggle }) {
 export default function Navigator() {
   const project = useBuilder((s) => s.project);
   const activePageId = useUI((s) => s.activePageId);
-  const rootId = getActivePage(project, activePageId)?.rootId;
+  const editingComponentId = useUI((s) => s.editingComponentId);
+  const rootId = editingComponentId ? project?.components?.[editingComponentId]?.rootId : getActivePage(project, activePageId)?.rootId;
   const [collapsed, setCollapsed] = useState(() => new Set());
   const toggle = (id) =>
     setCollapsed((prev) => {
