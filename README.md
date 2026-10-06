@@ -7,6 +7,8 @@ responsively, save projects to PostgreSQL, and export a standalone HTML/CSS/JS s
 > Built with React + Vite + Tailwind (client) and Express + PostgreSQL (server) in
 > an npm-workspaces monorepo.
 
+![Prism editor: component panel, freeform canvas with desktop, tablet and phone previews, and theme colors](.github/assets/screenshot.png)
+
 ## About
 
 Prism is a visual website builder that runs in the browser and can place Three.js 3D models next to regular page elements. It is for designers and developers who want to lay out a page freely and export plain HTML/CSS/JS instead of being locked into a hosted builder. This is version 1: the editor, 3D support, PostgreSQL saving and export work, with the limitations listed below.
