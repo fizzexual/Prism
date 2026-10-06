@@ -99,7 +99,7 @@ export default function Canvas() {
   return (
     <div
       ref={surfaceRef}
-      className="relative flex-1 overflow-hidden bg-neutral-100 [background-image:radial-gradient(#d6d8de_1px,transparent_1px)] [background-size:18px_18px]"
+      className="relative flex-1 overflow-hidden bg-neutral-100 bg-[radial-gradient(#d6d8de_1px,transparent_1px)] bg-size-[18px_18px]"
       style={{ touchAction: 'none' }}
       onPointerDown={(e) => { if (e.target === surfaceRef.current) useUI.getState().select(null); }}
     >
@@ -117,7 +117,7 @@ export default function Canvas() {
       {editingComp && (
         <div className="absolute left-1/2 top-3 z-40 flex -translate-x-1/2 items-center gap-3 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-lg">
           <span className="flex items-center gap-1.5"><Boxes size={13} /> Editing component: {editingComp.name}</span>
-          <button onClick={() => useUI.getState().setEditingComponent(null)} className="rounded bg-white/20 px-2 py-0.5 hover:bg-white/30">Done</button>
+          <button onClick={() => useUI.getState().setEditingComponent(null)} className="rounded-sm bg-white/20 px-2 py-0.5 hover:bg-white/30">Done</button>
         </div>
       )}
 
@@ -127,7 +127,7 @@ export default function Canvas() {
       )}
 
       {!previewMode && (
-        <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-xl bg-white/95 px-2 py-1 shadow-lg ring-1 ring-black/10 backdrop-blur">
+        <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-xl bg-white/95 px-2 py-1 shadow-lg ring-1 ring-black/10 backdrop-blur-sm">
           <button onClick={() => setTool((t) => (t === 'hand' ? 'select' : 'hand'))} title="Hand tool (or hold Space)" className={`grid h-7 w-7 place-items-center rounded-md ${tool === 'hand' ? 'bg-indigo-600 text-white' : 'text-neutral-600 hover:bg-neutral-100'}`}>
             <Hand size={15} />
           </button>

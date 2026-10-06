@@ -89,7 +89,7 @@ export default function BuilderApp() {
     <div className="flex h-full flex-col bg-neutral-100 text-neutral-900">
       <header className="flex h-12 shrink-0 items-center gap-3 border-b border-neutral-200 bg-white px-3">
         <div className="flex shrink-0 items-center gap-2 pr-1">
-          <div className="h-5 w-5 rounded bg-gradient-to-br from-indigo-500 to-fuchsia-500" />
+          <div className="h-5 w-5 rounded-sm bg-linear-to-br/srgb from-indigo-500 to-fuchsia-500" />
         </div>
         <ProjectBar />
         <PagesMenu />
@@ -106,7 +106,7 @@ export default function BuilderApp() {
             const Icon = BP_ICONS[key];
             return (
               <button key={key} onClick={() => useUI.getState().setBreakpoint(key)} title={`${bp.label} (${bp.width}px)`}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs ${breakpoint === key ? 'bg-white text-indigo-600 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'}`}>
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs ${breakpoint === key ? 'bg-white text-indigo-600 shadow-xs' : 'text-neutral-500 hover:text-neutral-800'}`}>
                 <Icon size={14} />
               </button>
             );

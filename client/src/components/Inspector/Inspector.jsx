@@ -240,7 +240,7 @@ export function Inspector() {
         <input
           value={el.name || ''}
           onChange={(e) => doc.renameElement(page.id, el.id, e.target.value)}
-          className="w-full bg-transparent text-sm font-medium text-neutral-800 outline-none"
+          className="w-full bg-transparent text-sm font-medium text-neutral-800 outline-hidden"
         />
         <span className="text-[11px] text-neutral-400">{ELEMENTS[el.type]?.label}</span>
       </div>

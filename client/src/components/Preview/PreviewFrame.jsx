@@ -36,7 +36,7 @@ export default function PreviewFrame() {
   const minHeight = Math.max(480, contentBottom + 60);
 
   return (
-    <div className="fixed inset-0 z-[200] flex flex-col bg-neutral-800">
+    <div className="fixed inset-0 z-200 flex flex-col bg-neutral-800">
       <div className="flex h-12 shrink-0 items-center justify-between bg-neutral-900 px-4 text-white">
         <span className="text-sm font-medium">Preview · {page.name}</span>
         <div className="flex items-center gap-0.5 rounded-lg bg-white/10 p-0.5">

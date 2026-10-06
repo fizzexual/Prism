@@ -5,7 +5,7 @@ import { extOf, supportedExtensions } from '../../three/loaderRegistry.js';
 import { useEditorStore } from '../../state/editorStore.js';
 
 const inputCls =
-  'w-full rounded-md border border-neutral-200 bg-white px-1.5 py-1 text-xs text-neutral-800 outline-none focus:border-indigo-400';
+  'w-full rounded-md border border-neutral-200 bg-white px-1.5 py-1 text-xs text-neutral-800 outline-hidden focus:border-indigo-400';
 
 const rad2deg = (r) => Math.round((r * 180) / Math.PI);
 const deg2rad = (d) => (d * Math.PI) / 180;

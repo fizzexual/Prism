@@ -46,7 +46,7 @@ export default function PagesMenu() {
                     onClick={(e) => e.stopPropagation()}
                     onBlur={(e) => { useBuilder.getState().renamePage(p.id, e.target.value || 'Page'); setRenaming(null); }}
                     onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
-                    className="flex-1 rounded border border-neutral-200 px-1 text-xs"
+                    className="flex-1 rounded-sm border border-neutral-200 px-1 text-xs"
                   />
                 ) : (
                   <span className="flex-1 truncate" onDoubleClick={(e) => { e.stopPropagation(); setRenaming(p.id); }}>{p.name}</span>

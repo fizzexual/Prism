@@ -137,7 +137,7 @@ function ThemePanel({ project }) {
               type="color"
               value={c}
               onChange={(e) => { const n = [...colors]; n[i] = e.target.value; setColors(n); }}
-              className="h-8 w-full cursor-pointer rounded border border-neutral-200 bg-white p-0"
+              className="h-8 w-full cursor-pointer rounded-sm border border-neutral-200 bg-white p-0"
               title={c}
             />
             <button
@@ -150,7 +150,7 @@ function ThemePanel({ project }) {
         ))}
         <button
           onClick={() => setColors([...colors, '#000000'])}
-          className="grid h-8 place-items-center rounded border border-dashed border-neutral-300 text-neutral-400 hover:border-indigo-400 hover:text-indigo-500"
+          className="grid h-8 place-items-center rounded-sm border border-dashed border-neutral-300 text-neutral-400 hover:border-indigo-400 hover:text-indigo-500"
         >
           +
         </button>
@@ -176,8 +176,8 @@ function InstancePanel({ inst, project }) {
           <span className="text-sm font-medium text-neutral-800">{comp?.name || 'Component'}</span>
         </div>
         <div className="flex gap-1">
-          <button onClick={() => { const id = useBuilder.getState().duplicate(inst.id); if (id) useUI.getState().select(id); }} className="grid h-6 w-6 place-items-center rounded text-neutral-500 hover:bg-neutral-100" title="Duplicate"><Copy size={13} /></button>
-          <button onClick={() => { useBuilder.getState().remove(inst.id); useUI.getState().select(null); }} className="grid h-6 w-6 place-items-center rounded text-red-500 hover:bg-red-50" title="Delete"><Trash2 size={13} /></button>
+          <button onClick={() => { const id = useBuilder.getState().duplicate(inst.id); if (id) useUI.getState().select(id); }} className="grid h-6 w-6 place-items-center rounded-sm text-neutral-500 hover:bg-neutral-100" title="Duplicate"><Copy size={13} /></button>
+          <button onClick={() => { useBuilder.getState().remove(inst.id); useUI.getState().select(null); }} className="grid h-6 w-6 place-items-center rounded-sm text-red-500 hover:bg-red-50" title="Delete"><Trash2 size={13} /></button>
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto scroll-thin">
@@ -243,11 +243,11 @@ function VariablesBindingSection({ inst, comp, eff }) {
             <span className="w-16 shrink-0 text-[11px] text-neutral-400">{row.label}</span>
             {bound ? (
               <>
-                <input value={v?.name || ''} onChange={(e) => rename(bound, e.target.value)} className="min-w-0 flex-1 rounded border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs text-indigo-700 outline-none" />
+                <input value={v?.name || ''} onChange={(e) => rename(bound, e.target.value)} className="min-w-0 flex-1 rounded-sm border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs text-indigo-700 outline-hidden" />
                 <button onClick={() => unexpose(row)} title="Remove variable" className="shrink-0 text-neutral-300 hover:text-red-500"><X size={13} /></button>
               </>
             ) : (
-              <button onClick={() => expose(row)} className="flex-1 rounded border border-dashed border-neutral-300 px-2 py-1 text-left text-[11px] text-neutral-500 hover:border-indigo-400 hover:text-indigo-600">Expose</button>
+              <button onClick={() => expose(row)} className="flex-1 rounded-sm border border-dashed border-neutral-300 px-2 py-1 text-left text-[11px] text-neutral-500 hover:border-indigo-400 hover:text-indigo-600">Expose</button>
             )}
           </div>
         );
@@ -286,26 +286,26 @@ export default function StylePanel() {
       <div className="flex items-center justify-between border-b border-neutral-100 px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-neutral-800">{inst.label}</span>
-          {breakpoint !== 'base' && <span className="rounded bg-amber-100 px-1.5 text-[10px] text-amber-700">{breakpoint}</span>}
+          {breakpoint !== 'base' && <span className="rounded-sm bg-amber-100 px-1.5 text-[10px] text-amber-700">{breakpoint}</span>}
         </div>
         <div className="flex gap-1">
           {!isRoot && (
             <button
               onClick={() => { const r = useBuilder.getState().createComponent(selectedId, inst.label || 'Component'); if (r) useUI.getState().select(r.instId); }}
-              className="grid h-6 w-6 place-items-center rounded text-neutral-500 hover:bg-neutral-100 hover:text-indigo-600" title="Create component from selection"
+              className="grid h-6 w-6 place-items-center rounded-sm text-neutral-500 hover:bg-neutral-100 hover:text-indigo-600" title="Create component from selection"
             >
               <Boxes size={13} />
             </button>
           )}
           <button
             onClick={() => { const id = useBuilder.getState().duplicate(selectedId); if (id) useUI.getState().select(id); }}
-            className="grid h-6 w-6 place-items-center rounded text-neutral-500 hover:bg-neutral-100" title="Duplicate"
+            className="grid h-6 w-6 place-items-center rounded-sm text-neutral-500 hover:bg-neutral-100" title="Duplicate"
           >
             <Copy size={13} />
           </button>
           <button
             onClick={() => { useBuilder.getState().remove(selectedId); useUI.getState().select(null); }}
-            className="grid h-6 w-6 place-items-center rounded text-red-500 hover:bg-red-50" title="Delete"
+            className="grid h-6 w-6 place-items-center rounded-sm text-red-500 hover:bg-red-50" title="Delete"
           >
             <Trash2 size={13} />
           </button>

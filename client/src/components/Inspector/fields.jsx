@@ -17,7 +17,7 @@ export function Row({ children }) {
 }
 
 const inputCls =
-  'w-full rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-800 outline-none focus:border-indigo-400';
+  'w-full rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-800 outline-hidden focus:border-indigo-400';
 
 export function NumberField({ label, value, onChange, testId, step = 1, min }) {
   return (
@@ -105,7 +105,7 @@ export function ColorField({ label, value, onChange }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="h-6 w-6 shrink-0 rounded border border-neutral-300"
+        className="h-6 w-6 shrink-0 rounded-sm border border-neutral-300"
         style={{ background: color }}
         title="Pick color"
       />

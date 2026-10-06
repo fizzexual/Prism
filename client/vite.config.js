@@ -1,10 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   // For GitHub Pages the app is served under /<repo>/ — set via BUILD_BASE in CI.
   base: process.env.BUILD_BASE || '/',
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   // Ensure a single React instance across the app and pre-bundled deps
   // (dnd-kit, @react-three/fiber) so hooks bind correctly in this monorepo.
   resolve: {

@@ -5,7 +5,7 @@ import { parseLength } from './styleUtils.js';
 import { useBuilder } from './store.js';
 
 const inputCls =
-  'w-full rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-800 outline-none focus:border-indigo-400';
+  'w-full rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-800 outline-hidden focus:border-indigo-400';
 
 export function Section({ title, children, defaultOpen = true }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -108,7 +108,7 @@ export function LengthField({ value, onChange, units = LEN_UNITS }) {
       <select
         value={unit || 'px'}
         onChange={(e) => commit(num, e.target.value)}
-        className="w-16 shrink-0 rounded-md border border-neutral-200 bg-white px-1 py-1 text-xs text-neutral-600 outline-none focus:border-indigo-400"
+        className="w-16 shrink-0 rounded-md border border-neutral-200 bg-white px-1 py-1 text-xs text-neutral-600 outline-hidden focus:border-indigo-400"
       >
         {units.map((u) => (
           <option key={u} value={u}>
@@ -129,7 +129,7 @@ export function PxField({ value, onChange }) {
       value={num}
       placeholder="0"
       onChange={(e) => onChange(e.target.value === '' ? '' : `${e.target.value}px`)}
-      className="w-full rounded-md border border-neutral-200 bg-white px-1.5 py-1 text-center text-xs text-neutral-800 outline-none focus:border-indigo-400"
+      className="w-full rounded-md border border-neutral-200 bg-white px-1.5 py-1 text-center text-xs text-neutral-800 outline-hidden focus:border-indigo-400"
     />
   );
 }
@@ -146,7 +146,7 @@ export function Segmented({ value, onChange, options }) {
             title={o.title || o.value}
             onClick={() => onChange(active ? '' : o.value)}
             className={`flex flex-1 items-center justify-center rounded px-1.5 py-1 text-[11px] ${
-              active ? 'bg-white text-indigo-600 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'
+              active ? 'bg-white text-indigo-600 shadow-xs' : 'text-neutral-500 hover:text-neutral-800'
             }`}
           >
             {o.icon ? <o.icon size={13} /> : o.label}
@@ -173,7 +173,7 @@ export function ModeField({ mode, value, onMode, onValue, modes = ['Fill', 'Fit'
       <select
         value={mode}
         onChange={(e) => onMode(e.target.value)}
-        className="w-[5.5rem] shrink-0 rounded-md border border-neutral-200 bg-white px-1 py-1 text-xs text-neutral-600 outline-none focus:border-indigo-400"
+        className="w-22 shrink-0 rounded-md border border-neutral-200 bg-white px-1 py-1 text-xs text-neutral-600 outline-hidden focus:border-indigo-400"
       >
         {modes.map((m) => (
           <option key={m} value={m}>{m}</option>
@@ -214,7 +214,7 @@ export function AlignGrid({ value, onChange }) {
               key={`${h}-${v}`}
               type="button"
               onClick={() => onChange({ h, v })}
-              className={`grid h-5 w-5 place-items-center rounded ${active ? 'bg-white shadow-sm' : 'hover:bg-neutral-200'}`}
+              className={`grid h-5 w-5 place-items-center rounded-sm ${active ? 'bg-white shadow-xs' : 'hover:bg-neutral-200'}`}
             >
               <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-indigo-600' : 'bg-neutral-400'}`} />
             </button>
@@ -234,7 +234,7 @@ export function ToggleField({ label, checked, onChange }) {
         onClick={() => onChange(!checked)}
         className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${checked ? 'bg-indigo-600' : 'bg-neutral-300'}`}
       >
-        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${checked ? 'left-[18px]' : 'left-0.5'}`} />
+        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${checked ? 'left-[18px]' : 'left-0.5'}`} />
       </button>
     </label>
   );
@@ -249,7 +249,7 @@ export function ColorField({ value, onChange }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="h-6 w-6 shrink-0 rounded border border-neutral-300"
+        className="h-6 w-6 shrink-0 rounded-sm border border-neutral-300"
         style={{
           background: color || 'repeating-conic-gradient(#ddd 0% 25%, #fff 0% 50%) 50% / 8px 8px',
         }}
@@ -269,7 +269,7 @@ export function ColorField({ value, onChange }) {
             {swatches.length > 0 && (
               <div className="mt-2 flex w-[200px] flex-wrap gap-1">
                 {swatches.map((c) => (
-                  <button key={c} type="button" onClick={() => onChange(c)} title={c} style={{ background: c }} className="h-5 w-5 rounded border border-neutral-300" />
+                  <button key={c} type="button" onClick={() => onChange(c)} title={c} style={{ background: c }} className="h-5 w-5 rounded-sm border border-neutral-300" />
                 ))}
               </div>
             )}

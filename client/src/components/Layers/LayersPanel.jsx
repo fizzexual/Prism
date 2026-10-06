@@ -87,7 +87,7 @@ export default function LayersPanel() {
             const id = useDocumentStore.getState().addPage(`Page ${project.pages.length + 1}`);
             useEditorStore.getState().setActivePage(id);
           }}
-          className="grid h-5 w-5 place-items-center rounded text-neutral-400 hover:bg-neutral-100"
+          className="grid h-5 w-5 place-items-center rounded-sm text-neutral-400 hover:bg-neutral-100"
           title="Add page"
         >
           <Plus size={12} />

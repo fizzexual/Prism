@@ -48,7 +48,7 @@ export default function AssetsPanel() {
             </button>
             <button
               onClick={() => useBuilder.getState().removeAsset(a.id)}
-              className="absolute right-1 top-1 hidden h-5 w-5 place-items-center rounded bg-black/60 text-white group-hover:grid"
+              className="absolute right-1 top-1 hidden h-5 w-5 place-items-center rounded-sm bg-black/60 text-white group-hover:grid"
               title="Remove asset"
             >
               <Trash2 size={11} />

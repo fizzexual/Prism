@@ -47,7 +47,7 @@ export default function ComponentsPanel() {
                   defaultValue={c.name}
                   onBlur={(e) => { useBuilder.getState().renameComponent(c.id, e.target.value || 'Component'); setRenaming(null); }}
                   onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
-                  className="min-w-0 flex-1 rounded border border-neutral-200 px-1 text-xs outline-none focus:border-indigo-400"
+                  className="min-w-0 flex-1 rounded-sm border border-neutral-200 px-1 text-xs outline-hidden focus:border-indigo-400"
                 />
               ) : (
                 <button onClick={() => place(c.id)} onDoubleClick={() => setRenaming(c.id)} className="min-w-0 flex-1 truncate text-left" title="Click to place · double-click to rename">{c.name}</button>

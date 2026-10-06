@@ -19,7 +19,7 @@ const V = [
 
 export default function AlignToolbar({ ctx, setMany }) {
   const Btn = ({ Icon, title, onClick }) => (
-    <button onClick={onClick} title={title} className="grid h-7 w-7 place-items-center rounded text-neutral-500 hover:bg-neutral-100 hover:text-indigo-600">
+    <button onClick={onClick} title={title} className="grid h-7 w-7 place-items-center rounded-sm text-neutral-500 hover:bg-neutral-100 hover:text-indigo-600">
       <Icon size={15} />
     </button>
   );

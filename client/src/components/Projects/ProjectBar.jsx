@@ -80,7 +80,7 @@ export default function ProjectBar() {
       <input
         value={project.name}
         onChange={(e) => useDocumentStore.getState().setProjectMeta({ name: e.target.value })}
-        className="w-44 rounded bg-transparent px-1 py-0.5 text-sm font-medium text-neutral-800 outline-none hover:bg-neutral-100 focus:bg-neutral-100"
+        className="w-44 rounded-sm bg-transparent px-1 py-0.5 text-sm font-medium text-neutral-800 outline-hidden hover:bg-neutral-100 focus:bg-neutral-100"
       />
       <StatusChip />
       <button

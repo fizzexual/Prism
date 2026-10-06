@@ -32,7 +32,7 @@ export default function App() {
   return (
     <div className="flex h-full flex-col bg-neutral-100 text-neutral-900">
       <header className="flex h-12 shrink-0 items-center gap-3 border-b border-neutral-200 bg-white px-3">
-        <div className="h-5 w-5 rounded bg-gradient-to-br from-indigo-500 to-fuchsia-500" />
+        <div className="h-5 w-5 rounded-sm bg-linear-to-br/srgb from-indigo-500 to-fuchsia-500" />
         <ProjectBar />
         <div className="ml-auto">
           <Toolbar />

@@ -29,8 +29,8 @@ export default function ContextMenu() {
 
   return (
     <>
-      <div className="fixed inset-0 z-[90]" onClick={close} onContextMenu={(e) => { e.preventDefault(); close(); }} />
-      <div className="fixed z-[91] w-44 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-xl" style={{ left: x, top: y }}>
+      <div className="fixed inset-0 z-90" onClick={close} onContextMenu={(e) => { e.preventDefault(); close(); }} />
+      <div className="fixed z-91 w-44 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-xl" style={{ left: x, top: y }}>
         <Item icon={Files} label="Duplicate" hint="Ctrl D" onClick={run(duplicateSel)} />
         <Item icon={Copy} label="Copy" hint="Ctrl C" onClick={run(copy)} />
         <Item icon={ClipboardPaste} label="Paste" hint="Ctrl V" disabled={!clipboard.get()} onClick={run(paste)} />

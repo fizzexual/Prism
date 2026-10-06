@@ -71,7 +71,7 @@ export default function ProjectBar() {
       <input
         value={name}
         onChange={(e) => useBuilder.getState().setName(e.target.value)}
-        className="w-40 rounded bg-transparent px-1 py-0.5 text-sm font-medium text-neutral-800 outline-none hover:bg-neutral-100 focus:bg-neutral-100"
+        className="w-40 rounded-sm bg-transparent px-1 py-0.5 text-sm font-medium text-neutral-800 outline-hidden hover:bg-neutral-100 focus:bg-neutral-100"
       />
       <StatusChip />
       <button onClick={openMenu} className="flex items-center gap-1 rounded-md border border-neutral-200 px-2 py-1 text-xs text-neutral-600 hover:bg-neutral-50">

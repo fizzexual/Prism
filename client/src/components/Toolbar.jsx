@@ -54,7 +54,7 @@ export default function Toolbar() {
               onClick={() => ed.setBreakpoint(key)}
               title={`${bp.label} (${bp.width}px)`}
               className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors ${
-                breakpoint === key ? 'bg-white text-indigo-600 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'
+                breakpoint === key ? 'bg-white text-indigo-600 shadow-xs' : 'text-neutral-500 hover:text-neutral-800'
               }`}
             >
               <Icon size={14} />
