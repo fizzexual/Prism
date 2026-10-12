@@ -35,6 +35,45 @@ export function isAncestor(instances, maybeAncestor, id) {
   return collectSubtree(instances, maybeAncestor).includes(id);
 }
 
+/** The component whose master subtree contains `id`, or null if `id` lives on a page. */
+export function hostComponentId(project, id) {
+  let cur = id;
+  for (let parent = findParentId(project.instances, cur); parent; parent = findParentId(project.instances, cur)) cur = parent;
+  const comp = Object.values(project.components || {}).find((c) => c.rootId === cur);
+  return comp ? comp.id : null;
+}
+
+/** Component ids referenced by Instance nodes among the given instance ids. */
+export function referencedComponents(instances, ids) {
+  const out = new Set();
+  for (const i of ids) {
+    const n = instances[i];
+    if (n?.component === 'Instance' && n.props?.componentId) out.add(n.props.componentId);
+  }
+  return out;
+}
+
+/** Every component used (directly or through other components) inside `compId`'s master. */
+function componentsUsedBy(project, compId, acc = new Set()) {
+  const comp = project.components?.[compId];
+  if (!comp) return acc;
+  for (const c of referencedComponents(project.instances, collectSubtree(project.instances, comp.rootId))) {
+    if (!acc.has(c)) {
+      acc.add(c);
+      componentsUsedBy(project, c, acc);
+    }
+  }
+  return acc;
+}
+
+/** Would placing instances of `compIds` under `parentId` make a component contain itself? */
+export function wouldNestComponentInItself(project, compIds, parentId) {
+  const host = hostComponentId(project, parentId);
+  if (!host) return false;
+  for (const c of compIds) if (c === host || componentsUsedBy(project, c).has(host)) return true;
+  return false;
+}
+
 /** Resolve the active page (falls back to the first page). */
 export function getActivePage(project, activePageId) {
   if (!project) return null;
