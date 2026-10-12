@@ -51,6 +51,35 @@ const heroSplit = section('Hero (split)', [
   },
 ], { category: 'Hero' });
 
+// Light outline button for dark backgrounds (white text on the dark band).
+const ghostLight = (label) => ({ ...button(label, 'secondary'), style: { ...button(label, 'secondary').style, color: '#ffffff', 'border-color': 'rgba(255,255,255,0.45)' } });
+
+const heroThree = section('Hero (3D)', [
+  {
+    component: 'Columns',
+    style: { gap: '48px', 'align-items': 'center', width: '100%', 'max-width': '1150px' },
+    tablet: { gap: '24px' },
+    mobile: { 'flex-direction': 'column', gap: '12px', 'align-items': 'stretch' },
+    children: [
+      stack([
+        text('Interactive 3D', { 'font-size': '13px', 'font-weight': '700', 'letter-spacing': '0.08em', 'text-transform': 'uppercase', color: 'rgba(255,255,255,0.75)' }, { motion: rise(0) }),
+        heading('Make them stop scrolling', 'h1', { 'font-size': '56px', 'line-height': '1.05', 'letter-spacing': '-0.02em', color: '#ffffff' }, { motion: rise(0), tablet: { 'font-size': '42px' }, mobile: { 'font-size': '34px' } }),
+        text('A real-time 3D centrepiece that follows your visitors’ cursor. Glass, chrome or your own model, in your brand colour.', { 'font-size': '19px', 'line-height': '1.6', color: 'rgba(255,255,255,0.75)' }, { motion: rise(100), mobile: { 'font-size': '17px' } }),
+        inline([button('Start free'), ghostLight('Watch demo')], {}, { motion: rise(200) }),
+      ], { gap: '20px', 'flex-grow': '1', 'flex-basis': '0%' }, { mobile: { 'flex-basis': 'auto' } }),
+      {
+        component: '3D',
+        props: { shape: 'torusKnot', material: 'glass', color: 'var(--pm-primary)', motion: 'mouse', speed: 1 },
+        style: { 'flex-grow': '1', 'flex-basis': '0%', width: '100%', height: '460px', 'background-color': 'transparent', 'border-radius': '0px' },
+        tablet: { height: '360px' },
+        mobile: { 'flex-basis': 'auto', height: '300px' },
+        motion: { preset: 'zoom-in', duration: 1000, delay: 200, easing: 'smooth' },
+        children: [],
+      },
+    ],
+  },
+], { category: 'Hero', style: { 'background-color': 'var(--pm-dark)' } });
+
 const logoCloud = section('Logo cloud', [
   muted('Trusted by fast-moving teams', { 'font-size': '14px', 'font-weight': '600', 'text-align': 'center' }, { motion: rise(0) }),
   {
@@ -201,4 +230,4 @@ const footerColumns = section('Footer (columns)', [
   text('© 2026 Your Company. All rights reserved.', { color: 'rgba(255,255,255,0.6)', 'font-size': '13px' }),
 ], { category: 'Footer', place: 'bottom', style: { 'background-color': 'var(--pm-dark)', ...pad('64px', '64px'), gap: '40px', 'align-items': 'stretch' }, mobile: { ...pad('48px', '20px') } });
 
-export const LIBRARY = [heroSplit, logoCloud, stats, bento, gallery, team, testimonials, pricing, faq, contact, newsletter, footerColumns];
+export const LIBRARY = [heroSplit, heroThree, logoCloud, stats, bento, gallery, team, testimonials, pricing, faq, contact, newsletter, footerColumns];

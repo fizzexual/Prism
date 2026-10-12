@@ -4,11 +4,11 @@
 Enough well-designed sections to assemble a complete, impressive site in minutes.
 Every section must be phone-ready, follow the site theme and animate in.
 
-## Sections (17, grouped in the Add panel)
+## Sections (18, grouped in the Add panel)
 | Category | Sections |
 | --- | --- |
 | Navigation | Navbar |
-| Hero | Hero, Hero (split) |
+| Hero | Hero, Hero (split), Hero (3D) |
 | Content | Features, Bento grid, Stats, Gallery, Team |
 | Social proof | Logo cloud, Testimonials |
 | Pricing | Pricing |
