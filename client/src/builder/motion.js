@@ -70,7 +70,9 @@ export function motionCss({ editor = false } = {}) {
   const names = MOTION_PRESETS.map((p) => `[data-motion="${p.key}"].pm-in { animation-name: pm-${p.key}; }`).join('\n');
   const play = '[data-motion].pm-in { animation-duration: var(--pm-dur, 600ms); animation-delay: var(--pm-delay, 0ms); animation-timing-function: var(--pm-ease, ease); animation-fill-mode: backwards; }';
   const hide = editor ? '' : '\n.prism-motion [data-motion]:not(.pm-in) { opacity: 0; }';
-  const reduced = '\n@media (prefers-reduced-motion: reduce) { [data-motion] { animation: none !important; } }';
+  // Visitors who ask for reduced motion get none. The editor only plays when the
+  // designer asks (Play / picking a preset), so it plays regardless.
+  const reduced = editor ? '' : '\n@media (prefers-reduced-motion: reduce) { [data-motion] { animation: none !important; } }';
   return `${frames}\n${names}\n${play}${hide}${reduced}`;
 }
 

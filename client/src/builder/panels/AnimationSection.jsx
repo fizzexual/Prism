@@ -5,6 +5,7 @@ import { MOTION_PRESETS, EASING_OPTIONS, DURATIONS, DELAYS, STAGGERS, normalizeM
 import { playOnCanvas } from '../canvasMotion.js';
 
 const ms = (list) => list.map((n) => ({ value: String(n), label: `${n} ms` }));
+const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** Entrance animation for the selected element: preset grid, timing, stagger, Play. */
 export default function AnimationSection({ inst, container }) {
@@ -42,6 +43,11 @@ export default function AnimationSection({ inst, container }) {
       {motion && (
         <>
           <p className="text-[10px] leading-relaxed text-neutral-400">Plays when the element scrolls into view on the published site.</p>
+          {reducedMotion() && (
+            <p className="rounded-sm bg-amber-50 px-2 py-1 text-[10px] leading-relaxed text-amber-700">
+              Your system has “reduce motion” on, so you’ll see this play here, but visitors with that setting won’t.
+            </p>
+          )}
           <Field label="Duration"><SelectField value={String(motion.duration)} onChange={(v) => update({ duration: Number(v) })} options={ms(DURATIONS)} /></Field>
           <Field label="Delay"><SelectField value={String(motion.delay)} onChange={(v) => update({ delay: Number(v) })} options={ms(DELAYS)} /></Field>
           <Field label="Easing"><SelectField value={motion.easing} onChange={(v) => update({ easing: v })} options={EASING_OPTIONS} /></Field>

@@ -61,3 +61,12 @@ describe('MOTION_RUNTIME', () => {
     expect(MOTION_RUNTIME.length).toBeLessThan(1200);
   });
 });
+
+describe('editor playback vs reduced motion', () => {
+  it('the editor variant plays even when the OS asks for reduced motion (the designer pressed Play)', () => {
+    expect(motionCss({ editor: true })).not.toMatch(/prefers-reduced-motion/);
+  });
+  it('the exported page still respects reduced motion', () => {
+    expect(motionCss()).toMatch(/prefers-reduced-motion: reduce/);
+  });
+});
