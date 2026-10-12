@@ -143,3 +143,30 @@ describe('setMotion', () => {
     expect(P().instances[pasted].motion).toEqual({ preset: 'blur-in' });
   });
 });
+
+describe('themes', () => {
+  it('a new project has the default theme', async () => {
+    const { DEFAULT_THEME } = await import('./theme.js');
+    expect(P().theme).toEqual(DEFAULT_THEME);
+  });
+
+  it('applyTheme sets the theme and links the page to it in one undo step', async () => {
+    const { THEME_PRESETS } = await import('./theme.js');
+    const section = P().instances[root()].children[0];
+    B().setStyle(section, 'base', 'background-color', '#4f46e5'); // a "primary" colour typed as hex
+    const n = history();
+    const sunset = THEME_PRESETS.find((p) => p.key === 'sunset').theme;
+    B().applyTheme(sunset);
+    expect(history()).toBe(n + 1);
+    expect(P().theme).toEqual(sunset);
+    expect(P().styles[section].base['background-color']).toBe('var(--pm-primary)');
+    expect(P().styles[root()].base['font-family']).toBe('var(--pm-font-body)');
+  });
+
+  it('setTheme changes only the theme (live colour edits)', () => {
+    const n = history();
+    B().setTheme({ ...P().theme, radius: 24 });
+    expect(P().theme.radius).toBe(24);
+    expect(history()).toBe(n + 1);
+  });
+});

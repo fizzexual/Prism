@@ -1,4 +1,5 @@
 import { api } from '../lib/api.js';
+import { normalizeTheme } from './theme.js';
 
 // Namespaced separately from the legacy app so old data never contaminates.
 const P = 'prismx:project:';
@@ -84,6 +85,7 @@ export function normalizeProject(p) {
     components: isObj(p.components) ? p.components : {},
     tokens: isObj(p.tokens) && Array.isArray(p.tokens.colors) ? p.tokens : { colors: [...DEFAULT_COLORS] },
     assets: Array.isArray(p.assets) ? p.assets : [],
+    theme: normalizeTheme(p.theme), // older projects get the default (current look)
   };
 }
 

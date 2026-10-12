@@ -1,8 +1,24 @@
 import { create } from 'zustand';
 import { temporal } from 'zundo';
 import { COMPONENTS } from './components.jsx';
-import { createInstance, findParentId, collectSubtree, isAncestor, referencedComponents, wouldNestComponentInItself } from './model.js';
+import { createInstance, findParentId, collectSubtree, isAncestor, referencedComponents, wouldNestComponentInItself, normalizeTheme, applyThemeBatch } from './model.js';
 import { newId } from '../lib/ids.js';
+
+/** Apply setStylesBatch-style entries to a styles map (pure; '' or null clears a declaration). */
+function withBatch(stylesIn, entries) {
+  const styles = { ...stylesIn };
+  for (const { id, breakpoint, decls } of entries) {
+    const cur = { ...(styles[id] || {}) };
+    const bp = { ...(cur[breakpoint] || {}) };
+    for (const [k, val] of Object.entries(decls)) {
+      if (val === '' || val == null) delete bp[k];
+      else bp[k] = val;
+    }
+    cur[breakpoint] = bp;
+    styles[id] = cur;
+  }
+  return styles;
+}
 
 // In-memory clipboard for copy/paste (a serialized subtree snapshot).
 let clipboardSnap = null;
@@ -336,20 +352,23 @@ export const useBuilder = create(
 
       /** Set/clear declarations on several instances in ONE undo step: [{ id, breakpoint, decls }]. */
       setStylesBatch(entries) {
+        set((s) => (s.project ? { project: { ...s.project, styles: withBatch(s.project.styles, entries) } } : s));
+      },
+
+      /** Replace the site theme (live colour / font / radius edits). */
+      setTheme(theme) {
+        set((s) => (s.project ? { project: { ...s.project, theme: normalizeTheme(theme) } } : s));
+      },
+
+      /**
+       * Switch to a theme in one undo step: link colours that match the CURRENT theme to
+       * its variables, point page roots/headings at the theme, then set the new theme.
+       */
+      applyTheme(theme) {
         set((s) => {
           if (!s.project) return s;
-          const styles = { ...s.project.styles };
-          for (const { id, breakpoint, decls } of entries) {
-            const cur = { ...(styles[id] || {}) };
-            const bp = { ...(cur[breakpoint] || {}) };
-            for (const [k, val] of Object.entries(decls)) {
-              if (val === '' || val == null) delete bp[k];
-              else bp[k] = val;
-            }
-            cur[breakpoint] = bp;
-            styles[id] = cur;
-          }
-          return { project: { ...s.project, styles } };
+          const styles = withBatch(s.project.styles, applyThemeBatch(s.project));
+          return { project: { ...s.project, styles, theme: normalizeTheme(theme) } };
         });
       },
 
