@@ -1,8 +1,21 @@
-import { COMPONENTS } from './components.jsx';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { COMPONENTS, ICON_SET } from './components.jsx';
 import { generateCss } from './cssGen.js';
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const escAttr = (s) => String(s).replace(/"/g, '&quot;');
+const escAttr = (s) => esc(s).replace(/"/g, '&quot;');
+
+/** Allow only link schemes that can't run script (http(s), mailto, tel, anchors, relative paths). */
+export function safeHref(href) {
+  const raw = String(href ?? '').trim();
+  if (!raw) return '#';
+  // Browsers ignore tabs/newlines/control chars inside a scheme ("java\tscript:"), so test without them.
+  const compact = raw.replace(/[\u0000-\u0020]/g, '').toLowerCase();
+  const scheme = compact.match(/^([a-z][a-z0-9+.-]*):/);
+  if (scheme && !['http', 'https', 'mailto', 'tel'].includes(scheme[1])) return '#';
+  return raw;
+}
 const cls = (id) => `c-${id}`;
 
 const STYLE_BIND_KEYS = ['color', 'background-color', 'font-size', 'font-family'];
@@ -73,13 +86,15 @@ function boundParts(inst, resolve) {
   return { text, styleAttr: style.length ? ` style="${escAttr(style.join(';'))}"` : '' };
 }
 
-function renderNode(instances, id, indent, components = {}, resolve = null) {
+function renderNode(instances, id, indent, components = {}, resolve = null, open = new Set()) {
   const inst = instances[id];
   if (!inst) return '';
   if (inst.component === 'Instance') {
-    const comp = components[inst.props?.componentId];
-    if (!comp) return '';
-    return renderNode(instances, comp.rootId, indent, components, makeResolver(comp, inst));
+    const compId = inst.props?.componentId;
+    const comp = components[compId];
+    // A component placed inside its own master would recurse forever: render nothing for the inner copy.
+    if (!comp || open.has(compId)) return '';
+    return renderNode(instances, comp.rootId, indent, components, makeResolver(comp, inst), new Set(open).add(compId));
   }
   const def = COMPONENTS[inst.component];
   if (!def) return '';
@@ -92,21 +107,44 @@ function renderNode(instances, id, indent, components = {}, resolve = null) {
   if (inst.component === 'Divider') {
     return `${indent}<hr class="${c}"${styleAttr} />`;
   }
+  if (inst.component === 'Input') {
+    return `${indent}<input class="${c}"${styleAttr} placeholder="${escAttr(inst.props.placeholder || '')}" />`;
+  }
+  if (inst.component === 'Textarea') {
+    return `${indent}<textarea class="${c}"${styleAttr} placeholder="${escAttr(inst.props.placeholder || '')}"></textarea>`;
+  }
+  if (inst.component === 'Icon') {
+    const Ico = ICON_SET[inst.props.iconName] || ICON_SET.Star;
+    return `${indent}<span class="${c}"${styleAttr}>${renderToStaticMarkup(createElement(Ico, { size: '100%', 'aria-hidden': true }))}</span>`;
+  }
   if (inst.component === '3D') {
     const config = {};
     for (const k of THREE_KEYS) if (inst.props?.[k] !== undefined) config[k] = inst.props[k];
     return `${indent}<div class="${c}"${styleAttr} data-prism-3d="${escAttr(esc(JSON.stringify(config)))}"></div>`;
   }
   if (def.container) {
-    const kids = inst.children.map((ch) => renderNode(instances, ch, indent + '  ', components, resolve)).filter(Boolean).join('\n');
+    const kids = inst.children.map((ch) => renderNode(instances, ch, indent + '  ', components, resolve, open)).filter(Boolean).join('\n');
     return `${indent}<${def.tag} class="${c}"${styleAttr}>\n${kids}\n${indent}</${def.tag}>`;
   }
-  const attrs = inst.component === 'Link' ? ` href="${escAttr(inst.props.href || '#')}"` : '';
+  const attrs = inst.component === 'Link' ? ` href="${escAttr(safeHref(inst.props.href))}"` : '';
   const text = boundText != null ? boundText : (inst.props.text || '');
   return `${indent}<${def.tag} class="${c}"${styleAttr}${attrs}>${esc(text)}</${def.tag}>`;
 }
 
 const slugify = (s) => String(s || 'site').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'site';
+
+/** One unique file name per page; the first page is always index.html. */
+export function pageFileNames(pages) {
+  const used = new Set(['index']);
+  return pages.map((p, i) => {
+    if (i === 0) return 'index.html';
+    const base = String(p.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `page-${i + 1}`;
+    let name = base;
+    for (let n = 2; used.has(name); n++) name = `${base}-${n}`;
+    used.add(name);
+    return `${name}.html`;
+  });
+}
 
 /** Build a self-contained HTML document (CSS inlined) for one page. */
 export function exportHtmlForPage(project, page) {
@@ -154,10 +192,8 @@ export async function downloadHtml(project) {
   }
   const JSZip = (await import('jszip')).default;
   const zip = new JSZip();
-  project.pages.forEach((p, i) => {
-    const file = i === 0 ? 'index.html' : `${slugify(p.name) || `page-${i}`}.html`;
-    zip.file(file, exportHtmlForPage(project, p));
-  });
+  const files = pageFileNames(project.pages);
+  project.pages.forEach((p, i) => zip.file(files[i], exportHtmlForPage(project, p)));
   const blob = await zip.generateAsync({ type: 'blob' });
   triggerDownload(blob, `${name}.zip`);
 }
