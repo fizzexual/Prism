@@ -18,6 +18,13 @@ below are grouped by date and built from the git history.
   duration and easing, and a live preview of the state on the canvas. The
   exported site gets the same `:hover` / `:active` CSS. Hover only applies on
   devices that can hover, so it never sticks on phones.
+- Scroll and entrance animations. An Animation section in the style panel
+  with 8 presets (fade, fade up/down, slide, zoom, blur, flip), duration,
+  delay, easing, replay on scroll back, a stagger that animates a container's
+  children one after another, and a Play button. Section templates come
+  animated. Exported pages reveal elements as they scroll into view with a
+  tiny built-in script; content is never left hidden, and visitors who prefer
+  reduced motion see no animation.
 
 ## 2026-06-22
 

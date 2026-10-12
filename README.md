@@ -27,6 +27,10 @@ Prism is a visual website builder that runs in the browser and can place Three.j
   typography, backgrounds, borders and an alignment toolbar.
 - **Breakpoints** — Desktop (1280), Tablet (768) and Mobile (390) frames side by side
   on an infinite zoom/pan canvas; each style can be set per breakpoint.
+- **Hover & pressed effects** — Normal / Hover / Pressed switch with one-click
+  presets (Lift, Grow, Glow, Dim, Press, Sink) and smooth transitions.
+- **Scroll animations** — 8 entrance presets, timing, stagger for card rows,
+  previewed in the editor and working in the exported site (respects reduced motion).
 - **Free positioning** — make any element absolute and move/resize it with handles,
   snapping and guides.
 - **Components** — turn any subtree into a reusable component; instances stay in sync,
