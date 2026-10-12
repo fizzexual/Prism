@@ -34,6 +34,11 @@ below are grouped by date and built from the git history.
   restyle the site live, corner rounding and heading/body fonts. Applying a
   theme also links existing colours and corners to it. Every colour picker
   offers the theme colours as live links. All presets pass WCAG AA contrast.
+- Section library: 17 sections in 8 groups (new: Hero split, Logo cloud,
+  Stats, Bento grid, Gallery, Team, Testimonials, Pricing, FAQ, Contact,
+  Newsletter, Footer with columns), all phone-ready, theme-linked and animated.
+  Starter pages (Landing page, Portfolio, Startup) add a complete new page in
+  one click.
 
 ### Fixed
 
