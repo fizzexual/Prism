@@ -15,6 +15,7 @@ import AlignToolbar from './panels/AlignToolbar.jsx';
 import { StateSwitch, StateEffects } from './panels/StatesSection.jsx';
 import { stateEditKey } from './stateStyles.js';
 import AnimationSection from './panels/AnimationSection.jsx';
+import { FONT_OPTIONS } from './fonts.js';
 import { Section, Field, LengthField, PxField, SelectField, Segmented, ColorField, TextField, TextAreaField, ToggleField } from './controls.jsx';
 
 function fileToDataUrl(file) {
@@ -104,12 +105,8 @@ function ContentSection({ inst }) {
   return null;
 }
 
-const FONT_FAMILIES = [
-  { value: '', label: 'Default' },
-  { value: 'system-ui, -apple-system, "Segoe UI", sans-serif', label: 'Sans' },
-  { value: 'ui-serif, Georgia, "Times New Roman", serif', label: 'Serif' },
-  { value: 'ui-monospace, Menlo, Consolas, monospace', label: 'Mono' },
-];
+// System stacks (same values as before, so existing projects still show their choice) + curated Google Fonts.
+const FONT_FAMILIES = FONT_OPTIONS;
 const WEIGHTS = ['', '300', '400', '500', '600', '700', '800'];
 
 function FourSides({ label, prefix, v, set }) {

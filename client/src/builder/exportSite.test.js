@@ -146,3 +146,19 @@ describe('exportHtml with entrance animations', () => {
     expect(exportHtml(p)).toMatch(/<div class="c-m" style="--pm-dur[^"]*" data-motion="fade">/);
   });
 });
+
+describe('exportHtml with Google Fonts', () => {
+  it('links the fonts the page uses, with preconnect', () => {
+    const p = project({ h: { component: 'Heading', props: { text: 'Hi' }, children: [] } });
+    p.styles = { h: { base: { 'font-family': '"Fraunces", ui-serif, Georgia, serif' } } };
+    const html = exportHtml(p);
+    expect(html).toContain('<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />');
+    expect(html).toContain('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700;800&amp;display=swap" />');
+    expect(html.indexOf('fonts.googleapis.com')).toBeLessThan(html.indexOf('</head>'));
+  });
+
+  it('adds no font links when only system fonts are used', () => {
+    const html = exportHtml(project({ h: { component: 'Heading', props: { text: 'Hi' }, children: [] } }));
+    expect(html).not.toContain('fonts.googleapis.com');
+  });
+});
