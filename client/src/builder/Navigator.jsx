@@ -35,6 +35,7 @@ function NavNode({ id, depth, collapsed, toggle }) {
         )}
         {Icon && <Icon size={13} className="shrink-0 text-neutral-400" />}
         <span className="truncate">{inst.label}</span>
+        {inst.motion && <span className="shrink-0 text-[10px] text-indigo-400" title="Animated">✦</span>}
       </div>
       {hasChildren && isExpanded && inst.children.map((childId) => (
         <NavNode key={childId} id={childId} depth={depth + 1} collapsed={collapsed} toggle={toggle} />

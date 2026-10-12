@@ -101,3 +101,48 @@ describe('exportHtml with hover/pressed states', () => {
     expect(html).not.toContain('data-ws-state');
   });
 });
+
+describe('exportHtml with entrance animations', () => {
+  const box = (id, extra = {}) => ({ [id]: { component: 'Box', props: {}, children: [], ...extra } });
+
+  it('marks animated elements and adds the runtime + keyframes once', () => {
+    const html = exportHtml(project(box('a', { motion: { preset: 'fade-up', duration: 800, delay: 100 } })));
+    expect(html).toMatch(/<div class="c-a" style="--pm-dur:800ms;--pm-delay:100ms;--pm-ease:[^"]+" data-motion="fade-up">/);
+    expect(html).toContain('@keyframes pm-fade-up');
+    expect(html.match(/classList\.add\('prism-motion'\)/g)).toHaveLength(1); // runtime inlined once
+    expect(html.indexOf('IntersectionObserver')).toBeLessThan(html.indexOf('</head>'));
+  });
+
+  it('adds nothing to pages without animations', () => {
+    const html = exportHtml(project(box('a')));
+    expect(html).not.toContain('data-motion');
+    expect(html).not.toContain('IntersectionObserver');
+    expect(html).not.toContain('@keyframes');
+  });
+
+  it('a stagger container animates its children one after another, not itself', () => {
+    const p = project({
+      ...box('row', { motion: { preset: 'zoom-in', stagger: 100, delay: 50 }, children: ['c1', 'c2', 'c3'] }),
+      ...box('c1'), ...box('c2'), ...box('c3'),
+    });
+    p.instances.root.children = ['row'];
+    const html = exportHtml(p);
+    expect(html).toMatch(/<div class="c-row">/);
+    expect(html).toContain('class="c-c1" style="--pm-dur:600ms;--pm-delay:50ms');
+    expect(html).toContain('class="c-c2" style="--pm-dur:600ms;--pm-delay:150ms');
+    expect(html).toContain('class="c-c3" style="--pm-dur:600ms;--pm-delay:250ms');
+  });
+
+  it('ignores a crafted motion preset', () => {
+    const html = exportHtml(project(box('a', { motion: { preset: '"><script>alert(1)</script>' } })));
+    expect(html).not.toContain('data-motion');
+    expect(html).not.toContain('<script>alert');
+  });
+
+  it('a component instance with an animation animates its rendered root', () => {
+    const p = project({ inst: { component: 'Instance', props: { componentId: 'C', overrides: {} }, children: [], motion: { preset: 'fade' } } });
+    p.components = { C: { id: 'C', name: 'C', rootId: 'm', variables: [] } };
+    p.instances.m = { component: 'Box', props: {}, children: [] };
+    expect(exportHtml(p)).toMatch(/<div class="c-m" style="--pm-dur[^"]*" data-motion="fade">/);
+  });
+});

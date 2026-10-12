@@ -89,3 +89,25 @@ describe('templateInsertIndex', () => {
     expect(templateInsertIndex(p, root, null, tpl('Hero'))).toBe(2);
   });
 });
+
+describe('templates come animated', () => {
+  it('Hero content fades up in sequence', () => {
+    const snap = tpl('Hero').build();
+    const root = snap.instances[snap.rootId];
+    const delays = root.children.map((id) => snap.instances[id].motion?.delay);
+    expect(root.children.every((id) => snap.instances[id].motion?.preset === 'fade-up')).toBe(true);
+    expect(delays).toEqual([0, 100, 200]); // values the Delay dropdown offers
+  });
+
+  it('Features cards stagger in', () => {
+    const snap = tpl('Features').build();
+    const cols = nodes(snap, 'Columns')[0];
+    expect(cols.motion).toMatchObject({ preset: 'fade-up' });
+    expect(cols.motion.stagger).toBeGreaterThan(0);
+  });
+
+  it('Navbar does not animate (it should be there instantly)', () => {
+    const snap = tpl('Navbar').build();
+    expect(Object.values(snap.instances).some((i) => i.motion)).toBe(false);
+  });
+});

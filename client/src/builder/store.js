@@ -253,6 +253,17 @@ export const useBuilder = create(
         });
       },
 
+      /** Set (or clear with null) an element's entrance animation — see motion.js. */
+      setMotion(id, motion) {
+        set((s) => {
+          const inst = s.project?.instances[id];
+          if (!inst) return s;
+          const next = { ...inst };
+          if (motion) next.motion = { ...motion }; else delete next.motion;
+          return { project: { ...s.project, instances: { ...s.project.instances, [id]: next } } };
+        });
+      },
+
       /** Set one variable override on an instance node (clear with value=undefined). */
       setOverride(instId, varId, value) {
         set((s) => {

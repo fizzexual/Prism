@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { COMPONENTS, ICON_SET, tagFor } from './components.jsx';
 import { generateCss } from './cssGen.js';
+import { normalizeMotion, motionAttrs, motionCss, MOTION_RUNTIME } from './motion.js';
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const escAttr = (s) => esc(s).replace(/"/g, '&quot;');
@@ -83,10 +84,14 @@ function boundParts(inst, resolve) {
       else if (STYLE_BIND_KEYS.includes(prop)) style.push(`${prop}:${val}`);
     }
   }
-  return { text, styleAttr: style.length ? ` style="${escAttr(style.join(';'))}"` : '' };
+  return { text, style };
 }
 
-function renderNode(instances, id, indent, components = {}, resolve = null, open = new Set()) {
+/**
+ * `anim` = { m, extra } is an animation handed down to this node: from a component
+ * Instance (animates the master's root) or from a stagger container (extra delay).
+ */
+function renderNode(instances, id, indent, components = {}, resolve = null, open = new Set(), anim = null) {
   const inst = instances[id];
   if (!inst) return '';
   if (inst.component === 'Instance') {
@@ -94,12 +99,22 @@ function renderNode(instances, id, indent, components = {}, resolve = null, open
     const comp = components[compId];
     // A component placed inside its own master would recurse forever: render nothing for the inner copy.
     if (!comp || open.has(compId)) return '';
-    return renderNode(instances, comp.rootId, indent, components, makeResolver(comp, inst), new Set(open).add(compId));
+    const ownAnim = normalizeMotion(inst.motion);
+    const handed = ownAnim ? { m: ownAnim, extra: anim?.extra || 0 } : anim;
+    return renderNode(instances, comp.rootId, indent, components, makeResolver(comp, inst), new Set(open).add(compId), handed);
   }
   const def = COMPONENTS[inst.component];
   if (!def) return '';
   const c = cls(id);
-  const { text: boundText, styleAttr } = boundParts(inst, resolve);
+  const { text: boundText, style } = boundParts(inst, resolve);
+
+  // Animation: a stagger container hands its animation to its children instead of playing it.
+  const own = normalizeMotion(inst.motion);
+  const staggers = Boolean(own && own.stagger > 0 && def.container);
+  const self = staggers ? null : own ? { m: own, extra: anim?.extra || 0 } : anim;
+  const { attrs: motionAttr, vars } = motionAttrs(self?.m, self?.extra || 0);
+  const styleList = vars ? [vars, ...style] : style;
+  const styleAttr = (styleList.length ? ` style="${escAttr(styleList.join(';'))}"` : '') + motionAttr;
 
   if (inst.component === 'Image') {
     return `${indent}<img class="${c}"${styleAttr} src="${escAttr(inst.props.src || '')}" alt="${escAttr(inst.props.alt || '')}" />`;
@@ -123,7 +138,10 @@ function renderNode(instances, id, indent, components = {}, resolve = null, open
     return `${indent}<div class="${c}"${styleAttr} data-prism-3d="${escAttr(esc(JSON.stringify(config)))}"></div>`;
   }
   if (def.container) {
-    const kids = inst.children.map((ch) => renderNode(instances, ch, indent + '  ', components, resolve, open)).filter(Boolean).join('\n');
+    const kids = inst.children
+      .map((ch, i) => renderNode(instances, ch, indent + '  ', components, resolve, open, staggers ? { m: own, extra: i * own.stagger } : null))
+      .filter(Boolean)
+      .join('\n');
     return `${indent}<${def.tag} class="${c}"${styleAttr}>\n${kids}\n${indent}</${def.tag}>`;
   }
   const attrs = inst.component === 'Link' ? ` href="${escAttr(safeHref(inst.props.href))}"` : '';
@@ -160,7 +178,7 @@ export function exportHtmlForPage(project, page) {
   <style>
 ${css}
   </style>
-</head>
+${body.includes(' data-motion=') ? `  <style>\n${motionCss()}\n  </style>\n  <script>${MOTION_RUNTIME}</script>\n` : ''}</head>
 <body>
 ${body}
 ${body.includes('data-prism-3d=') ? THREE_SCRIPT : ''}</body>
