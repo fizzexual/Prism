@@ -33,6 +33,8 @@ Prism is a visual website builder that runs in the browser and can place Three.j
   previewed in the editor and working in the exported site (respects reduced motion).
 - **Google Fonts** — 16 curated typefaces per element or site-wide (headings /
   body); only the fonts in use are loaded.
+- **Site themes** — six presets plus live theme colours, corners and fonts as
+  CSS variables; colour pickers link to theme colours; presets pass WCAG AA.
 - **Free positioning** — make any element absolute and move/resize it with handles,
   snapping and guides.
 - **Components** — turn any subtree into a reusable component; instances stay in sync,
