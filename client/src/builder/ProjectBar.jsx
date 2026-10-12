@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, Plus, Trash2, Cloud, CloudOff, Loader2, FolderOpen } from 'lucide-react';
+import { ChevronDown, Plus, Trash2, Cloud, CloudOff, Loader2, FolderOpen, AlertTriangle } from 'lucide-react';
 import { useBuilder, useUI } from './store.js';
 import { defaultProject } from './model.js';
 import { listAll, deleteProject, loadLocal, getServerId, isValidProject } from './persist.js';
@@ -10,6 +10,7 @@ const STATUS = {
   saving: { icon: Loader2, text: 'Saving…', cls: 'text-neutral-400' },
   cloud: { icon: Cloud, text: 'Saved to cloud', cls: 'text-emerald-500' },
   local: { icon: CloudOff, text: 'Saved locally', cls: 'text-amber-500' },
+  error: { icon: AlertTriangle, text: 'Not saved: browser storage is full', cls: 'text-red-500' },
 };
 
 function StatusChip() {
@@ -26,6 +27,8 @@ function StatusChip() {
 
 function loadInto(project, serverId) {
   useBuilder.getState().loadProject(project);
+  // Reset page + component-editing state from the previous project (else the canvas can render nothing).
+  useUI.getState().setActivePage(project.pages[0].id);
   useUI.getState().select(null);
   useUI.getState().setServerId(serverId);
   useUI.getState().setSaveStatus('idle');

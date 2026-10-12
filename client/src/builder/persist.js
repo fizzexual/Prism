@@ -13,8 +13,8 @@ function readIndex() {
   }
 }
 
-export function saveLocal(project, serverId = null) {
-  localStorage.setItem(P + project.id, JSON.stringify(project));
+/** Record a project in the index (name, server id, last-opened). Small, so it fits even when the full document doesn't. */
+export function rememberProject(project, serverId = null) {
   const idx = readIndex();
   idx[project.id] = {
     id: project.id,
@@ -26,9 +26,19 @@ export function saveLocal(project, serverId = null) {
   localStorage.setItem(LAST, project.id);
 }
 
+/** Write the full document locally. Throws (e.g. QuotaExceededError) when storage is full. */
+export function saveLocal(project, serverId = null) {
+  localStorage.setItem(P + project.id, JSON.stringify(project));
+  rememberProject(project, serverId);
+}
+
 export function loadLocal(id) {
-  const raw = localStorage.getItem(P + id);
-  return raw ? JSON.parse(raw) : null;
+  try {
+    const raw = localStorage.getItem(P + id);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
 export function listLocal() {
@@ -56,9 +66,19 @@ export function isValidProject(p) {
 
 let serverDownUntil = 0;
 
+/**
+ * Save locally, then best-effort to the server. A full localStorage must not
+ * stop the server save. Status: 'cloud' | 'local' | 'error' (saved nowhere).
+ */
 export async function syncSave(project, serverId) {
-  saveLocal(project, serverId);
-  if (Date.now() < serverDownUntil) return { status: 'local', serverId };
+  let localOk = true;
+  try {
+    saveLocal(project, serverId);
+  } catch {
+    localOk = false;
+  }
+  const offline = { status: localOk ? 'local' : 'error', serverId };
+  if (Date.now() < serverDownUntil) return offline;
   try {
     if (serverId) {
       await api.saveProject(serverId, { name: project.name, document: project });
@@ -66,12 +86,12 @@ export async function syncSave(project, serverId) {
       return { status: 'cloud', serverId };
     }
     const row = await api.createProject({ name: project.name, document: project });
-    saveLocal(project, row.id);
+    try { rememberProject(project, row.id); } catch { /* index is tiny; ignore */ }
     serverDownUntil = 0;
     return { status: 'cloud', serverId: row.id };
   } catch {
     serverDownUntil = Date.now() + 30000;
-    return { status: 'local', serverId };
+    return offline;
   }
 }
 
