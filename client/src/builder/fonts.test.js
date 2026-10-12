@@ -35,3 +35,41 @@ describe('fonts', () => {
     expect(googleFontsHref(['Evil&x=<script>'])).toBeNull();
   });
 });
+
+describe('site fonts', async () => {
+  const { siteFontBatch, currentSiteFonts } = await import('./fonts.js');
+  const project = {
+    pages: [{ rootId: 'r1' }, { rootId: 'r2' }],
+    instances: {
+      r1: { id: 'r1', component: 'Body' }, r2: { id: 'r2', component: 'Body' },
+      h1: { id: 'h1', component: 'Heading' }, h2: { id: 'h2', component: 'Heading' }, t: { id: 't', component: 'Text' },
+    },
+    styles: { r1: { base: { 'font-family': fontStack('Inter') } }, r2: { base: {} }, h1: { base: { 'font-family': fontStack('Fraunces') } }, h2: { base: { 'font-family': fontStack('Fraunces') } } },
+  };
+
+  it('body font goes on every page root; heading font on every heading', () => {
+    expect(siteFontBatch(project, 'body', 'Sora')).toEqual([
+      { id: 'r1', breakpoint: 'base', decls: { 'font-family': fontStack('Sora') } },
+      { id: 'r2', breakpoint: 'base', decls: { 'font-family': fontStack('Sora') } },
+    ]);
+    expect(siteFontBatch(project, 'heading', 'Lora').map((e) => e.id)).toEqual(['h1', 'h2']);
+  });
+
+  it('an empty choice clears back to the default', () => {
+    expect(siteFontBatch(project, 'heading', '')[0].decls).toEqual({ 'font-family': '' });
+  });
+
+  it('reads the current site fonts (heading only when all headings agree)', () => {
+    expect(currentSiteFonts(project)).toEqual({ body: 'Inter', heading: 'Fraunces' });
+    const mixed = { ...project, styles: { ...project.styles, h2: { base: {} } } };
+    expect(currentSiteFonts(mixed).heading).toBe('');
+  });
+});
+
+describe('clearing the body font', async () => {
+  const { siteFontBatch } = await import('./fonts.js');
+  it('goes back to the system sans stack, not the browser default serif', () => {
+    const p = { pages: [{ rootId: 'r' }], instances: { r: { id: 'r', component: 'Body' } }, styles: {} };
+    expect(siteFontBatch(p, 'body', '')[0].decls['font-family']).toBe('system-ui, -apple-system, "Segoe UI", sans-serif');
+  });
+});
