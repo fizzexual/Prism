@@ -29,6 +29,15 @@ below are grouped by date and built from the git history.
   Syne, Playfair Display, Fraunces, JetBrains Mono and more) in the Font
   dropdown, plus site-wide Heading and Body fonts in the Theme panel. Only the
   fonts a site uses are loaded, in the editor and in the exported page.
+- Site themes. With nothing selected, the Theme panel offers six presets
+  (Indigo, Midnight, Sunset, Forest, Mono, Candy), six named colours that
+  restyle the site live, corner rounding and heading/body fonts. Applying a
+  theme also links existing colours and corners to it. Every colour picker
+  offers the theme colours as live links. All presets pass WCAG AA contrast.
+
+### Fixed
+
+- The colour picker closed every time you clicked its gradient.
 
 ## 2026-06-22
 

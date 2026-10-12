@@ -15,7 +15,8 @@ import AlignToolbar from './panels/AlignToolbar.jsx';
 import { StateSwitch, StateEffects } from './panels/StatesSection.jsx';
 import { stateEditKey } from './stateStyles.js';
 import AnimationSection from './panels/AnimationSection.jsx';
-import { FONT_OPTIONS, GOOGLE_FONTS, siteFontBatch, currentSiteFonts } from './fonts.js';
+import { FONT_OPTIONS } from './fonts.js';
+import ThemePanel from './panels/ThemePanel.jsx';
 import { Section, Field, LengthField, PxField, SelectField, Segmented, ColorField, TextField, TextAreaField, ToggleField } from './controls.jsx';
 
 function fileToDataUrl(file) {
@@ -123,62 +124,6 @@ function FourSides({ label, prefix, v, set }) {
           </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-const SITE_FONT_OPTIONS = [{ value: '', label: 'Default' }, ...GOOGLE_FONTS.map((f) => ({ value: f.family, label: f.family }))];
-
-/** One dropdown each for the whole site's body text and headings (one undo step per change). */
-function SiteFonts({ project }) {
-  const cur = currentSiteFonts(project);
-  const apply = (target, family) => useBuilder.getState().setStylesBatch(siteFontBatch(project, target, family));
-  return (
-    <div className="mt-5">
-      <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">Site fonts</div>
-      <div className="flex flex-col gap-2">
-        <Field label="Headings"><SelectField value={cur.heading} onChange={(v) => apply('heading', v)} options={SITE_FONT_OPTIONS} /></Field>
-        <Field label="Body"><SelectField value={cur.body} onChange={(v) => apply('body', v)} options={SITE_FONT_OPTIONS} /></Field>
-      </div>
-    </div>
-  );
-}
-
-function ThemePanel({ project }) {
-  const colors = project.tokens?.colors || [];
-  const setColors = (c) => useBuilder.getState().setColorTokens(c);
-  return (
-    <div className="p-3">
-      <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">Theme colors</div>
-      <div className="grid grid-cols-6 gap-2">
-        {colors.map((c, i) => (
-          <div key={i} className="group relative">
-            <input
-              type="color"
-              value={c}
-              onChange={(e) => { const n = [...colors]; n[i] = e.target.value; setColors(n); }}
-              className="h-8 w-full cursor-pointer rounded-sm border border-neutral-200 bg-white p-0"
-              title={c}
-            />
-            <button
-              onClick={() => setColors(colors.filter((_, j) => j !== i))}
-              className="absolute -right-1 -top-1 hidden h-4 w-4 place-items-center rounded-full bg-neutral-700 text-[10px] leading-none text-white group-hover:grid"
-            >
-              ×
-            </button>
-          </div>
-        ))}
-        <button
-          onClick={() => setColors([...colors, '#000000'])}
-          className="grid h-8 place-items-center rounded-sm border border-dashed border-neutral-300 text-neutral-400 hover:border-indigo-400 hover:text-indigo-500"
-        >
-          +
-        </button>
-      </div>
-      <SiteFonts project={project} />
-      <p className="mt-5 text-center text-[11px] leading-relaxed text-neutral-400">
-        Select an element on the canvas to edit it. These colors appear as swatches in every color picker.
-      </p>
     </div>
   );
 }

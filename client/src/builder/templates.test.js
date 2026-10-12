@@ -111,3 +111,41 @@ describe('templates come animated', () => {
     expect(Object.values(snap.instances).some((i) => i.motion)).toBe(false);
   });
 });
+
+describe('templates follow the site theme', () => {
+  const all = () => TEMPLATES.map((t) => t.build());
+  it('every heading uses the theme heading font and text colour unless it sits on a dark/colour band', () => {
+    for (const snap of all()) {
+      for (const h of nodes(snap, 'Heading')) expect(snap.styles[h.id].base['font-family']).toBe('var(--pm-font-heading)');
+    }
+  });
+  it('accent surfaces use theme colours and corners use the theme radius', () => {
+    const hero = tpl('Hero').build();
+    const btn = nodes(hero, 'Button')[0];
+    expect(hero.styles[hero.rootId].base['background-color']).toBe('var(--pm-dark)');
+    expect(hero.styles[btn.id].base).toMatchObject({ 'background-color': 'var(--pm-primary)', 'border-radius': 'var(--pm-radius)' });
+    const cta = tpl('Call to action').build();
+    expect(cta.styles[cta.rootId].base['background-color']).toBe('var(--pm-primary)');
+    const features = tpl('Features').build();
+    for (const c of nodes(features, 'Card')) expect(features.styles[c.id].base['border-radius']).toBe('var(--pm-radius)');
+  });
+});
+
+describe('new elements follow the site theme', async () => {
+  const { COMPONENTS } = await import('./components.jsx');
+  it('Body, Heading and Button defaults use theme variables', () => {
+    expect(COMPONENTS.Body.defaultStyle).toMatchObject({ 'background-color': 'var(--pm-surface)', color: 'var(--pm-ink)', 'font-family': 'var(--pm-font-body)' });
+    expect(COMPONENTS.Heading.defaultStyle).toMatchObject({ color: 'var(--pm-ink)', 'font-family': 'var(--pm-font-heading)' });
+    expect(COMPONENTS.Button.defaultStyle).toMatchObject({ 'background-color': 'var(--pm-primary)', 'border-radius': 'var(--pm-radius)' });
+  });
+});
+
+describe('the starter section of a new project is phone-ready too', () => {
+  it('tightens padding and scales the heading on phones', () => {
+    const p = defaultProject();
+    const section = p.instances[p.pages[0].rootId].children[0];
+    const heading = p.instances[section].children[0];
+    expect(parseInt(p.styles[section].mobile['padding-left'], 10)).toBeLessThanOrEqual(24);
+    expect(parseInt(p.styles[heading].mobile['font-size'], 10)).toBeLessThanOrEqual(36);
+  });
+});

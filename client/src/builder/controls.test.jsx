@@ -12,3 +12,38 @@ describe('ToggleField', () => {
     expect(onChange).toHaveBeenCalledWith(true);
   });
 });
+
+describe('ColorField theme colours', () => {
+  it('offers the theme colours first and stores a live link to the theme', async () => {
+    const { ColorField } = await import('./controls.jsx');
+    const { useBuilder } = await import('./store.js');
+    const { defaultProject } = await import('./model.js');
+    useBuilder.getState().loadProject(defaultProject());
+    const onChange = vi.fn();
+    render(<ColorField value="" onChange={onChange} />);
+    fireEvent.click(screen.getByTitle('Pick color'));
+    fireEvent.click(screen.getByRole('button', { name: 'Theme Primary' }));
+    expect(onChange).toHaveBeenCalledWith('var(--pm-primary)');
+  });
+
+  it('shows the resolved colour for a theme link', async () => {
+    const { ColorField } = await import('./controls.jsx');
+    render(<ColorField value="var(--pm-primary)" onChange={() => {}} />);
+    const swatch = screen.getAllByTitle('Pick color').at(-1);
+    expect(swatch.style.background).toContain('rgb(79, 70, 229)'); // #4f46e5
+  });
+});
+
+describe('ColorField inside a Field label', () => {
+  it('stays open while you click in the gradient, and closes from the backdrop', async () => {
+    const { ColorField, Field } = await import('./controls.jsx');
+    const { container } = render(<Field label="Color"><ColorField value="#336699" onChange={() => {}} /></Field>);
+    fireEvent.click(screen.getByTitle('Pick color'));
+    const sat = container.querySelector('.react-colorful__saturation');
+    expect(sat).not.toBeNull();
+    fireEvent.click(sat);
+    expect(container.querySelector('.react-colorful__saturation')).not.toBeNull(); // still open
+    fireEvent.click(container.querySelector('.fixed.inset-0'));
+    expect(container.querySelector('.react-colorful__saturation')).toBeNull(); // backdrop closes it
+  });
+});

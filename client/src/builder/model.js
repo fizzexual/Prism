@@ -1,5 +1,8 @@
 import { newId } from '../lib/ids.js';
 import { COMPONENTS } from './components.jsx';
+import { DEFAULT_THEME, normalizeTheme, applyThemeBatch } from './theme.js';
+
+export { normalizeTheme, applyThemeBatch };
 
 /** Create a fresh instance of a component. */
 export function createInstance(component) {
@@ -127,8 +130,11 @@ export function defaultProject(name = 'My Site') {
 
   const styles = {
     [body.id]: { base: { ...COMPONENTS.Body.defaultStyle } },
-    [section.id]: { base: { ...COMPONENTS.Section.defaultStyle, 'padding-top': '72px', 'padding-bottom': '72px', gap: '20px' } },
-    [heading.id]: { base: { ...COMPONENTS.Heading.defaultStyle, 'font-size': '48px' } },
+    [section.id]: {
+      base: { ...COMPONENTS.Section.defaultStyle, 'padding-top': '72px', 'padding-bottom': '72px', gap: '20px' },
+      mobile: { 'padding-top': '56px', 'padding-bottom': '56px', 'padding-left': '20px', 'padding-right': '20px' },
+    },
+    [heading.id]: { base: { ...COMPONENTS.Heading.defaultStyle, 'font-size': '48px' }, mobile: { 'font-size': '34px' } },
     [text.id]: { base: { ...COMPONENTS.Text.defaultStyle, 'font-size': '18px', 'max-width': '560px', color: '#4b5563' } },
     [button.id]: { base: { ...COMPONENTS.Button.defaultStyle, 'align-self': 'flex-start' } },
   };
@@ -141,6 +147,7 @@ export function defaultProject(name = 'My Site') {
     styles,
     components: {},
     tokens: { colors: ['#4f46e5', '#7c3aed', '#ec4899', '#111827', '#6b7280', '#10b981', '#f59e0b', '#ffffff'] },
+    theme: JSON.parse(JSON.stringify(DEFAULT_THEME)),
     assets: [],
   };
 }

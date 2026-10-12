@@ -14,8 +14,10 @@ function build(spec) {
     if (s.props) Object.assign(inst.props, s.props);
     if (s.label) inst.label = s.label;
     if (s.motion) inst.motion = { ...s.motion };
+    // Headings use the theme heading font (theme.js) unless the spec says otherwise.
+    const themed = s.component === 'Heading' ? { 'font-family': 'var(--pm-font-heading)' } : {};
     styles[inst.id] = {
-      base: { ...(COMPONENTS[s.component].defaultStyle || {}), ...(s.style || {}) },
+      base: { ...(COMPONENTS[s.component].defaultStyle || {}), ...themed, ...(s.style || {}) },
       ...(s.tablet ? { tablet: { ...s.tablet } } : {}),
       ...(s.mobile ? { mobile: { ...s.mobile } } : {}),
     };
@@ -34,11 +36,11 @@ const pad = (y, x) => ({ 'padding-top': y, 'padding-bottom': y, 'padding-left': 
 
 const card = (title, body) => ({
   component: 'Card',
-  style: { 'flex-grow': '1', 'flex-basis': '0%', gap: '8px' },
+  style: { 'flex-grow': '1', 'flex-basis': '0%', gap: '8px', 'border-radius': 'var(--pm-radius)' },
   mobile: { 'flex-basis': 'auto' },
   children: [
     { component: 'Heading', props: { text: title, level: 'h3' }, style: { 'font-size': '20px', 'font-weight': '700', 'margin-top': '0px', 'margin-bottom': '0px' } },
-    { component: 'Text', props: { text: body }, style: { color: '#6b7280', 'margin-top': '0px', 'margin-bottom': '0px' } },
+    { component: 'Text', props: { text: body }, style: { color: 'var(--pm-muted)', 'margin-top': '0px', 'margin-bottom': '0px' } },
   ],
 });
 
@@ -47,23 +49,23 @@ const SPECS = {
     label: 'Navbar',
     place: 'top',
     component: 'Section',
-    style: { 'flex-direction': 'row', 'align-items': 'center', 'justify-content': 'space-between', ...pad('18px', '40px'), 'background-color': '#ffffff', 'border-bottom-width': '1px', 'border-bottom-style': 'solid', 'border-color': '#e5e7eb' },
+    style: { 'flex-direction': 'row', 'align-items': 'center', 'justify-content': 'space-between', ...pad('18px', '40px'), 'background-color': 'var(--pm-surface)', 'border-bottom-width': '1px', 'border-bottom-style': 'solid', 'border-color': '#e5e7eb' },
     mobile: pad('14px', '20px'),
     children: [
       { component: 'Heading', props: { text: 'Brand', level: 'h2' }, style: { 'font-size': '22px', 'font-weight': '800', 'margin-top': '0px', 'margin-bottom': '0px' } },
-      { component: 'Button', props: { text: 'Sign in' }, style: { 'background-color': '#111827', color: '#ffffff', ...pad('8px', '16px'), 'border-radius': '8px', 'border-style': 'none' } },
+      { component: 'Button', props: { text: 'Sign in' }, style: { 'background-color': 'var(--pm-ink)', color: '#ffffff', ...pad('8px', '16px'), 'border-radius': 'var(--pm-radius)', 'border-style': 'none' } },
     ],
   },
   Hero: {
     label: 'Hero',
     component: 'Section',
-    style: { ...pad('96px', '64px'), gap: '20px', 'align-items': 'center', 'background-color': '#0b1020' },
+    style: { ...pad('96px', '64px'), gap: '20px', 'align-items': 'center', 'background-color': 'var(--pm-dark)' },
     tablet: pad('80px', '40px'),
     mobile: pad('64px', '20px'),
     children: [
       { component: 'Heading', motion: rise(0), props: { text: 'Build something amazing', level: 'h1' }, style: { 'font-size': '56px', 'font-weight': '800', color: '#ffffff', 'text-align': 'center', 'max-width': '760px', 'margin-top': '0px', 'margin-bottom': '0px', 'line-height': '1.1' }, tablet: { 'font-size': '44px' }, mobile: { 'font-size': '34px' } },
       { component: 'Text', motion: rise(100), props: { text: 'A modern landing page, designed visually in minutes.' }, style: { 'font-size': '20px', color: 'rgba(255,255,255,0.7)', 'text-align': 'center', 'max-width': '560px', 'margin-top': '0px', 'margin-bottom': '0px' }, mobile: { 'font-size': '17px' } },
-      { component: 'Button', motion: rise(200), props: { text: 'Get started' }, style: { 'background-color': '#4f46e5', color: '#ffffff', ...pad('14px', '28px'), 'border-radius': '10px', 'font-size': '16px', 'font-weight': '700', 'border-style': 'none' } },
+      { component: 'Button', motion: rise(200), props: { text: 'Get started' }, style: { 'background-color': 'var(--pm-primary)', color: '#ffffff', ...pad('14px', '28px'), 'border-radius': 'var(--pm-radius)', 'font-size': '16px', 'font-weight': '700', 'border-style': 'none' } },
     ],
   },
   Features: {
@@ -86,18 +88,18 @@ const SPECS = {
   CTA: {
     label: 'Call to action',
     component: 'Section',
-    style: { ...pad('72px', '64px'), 'align-items': 'center', gap: '16px', 'background-color': '#4f46e5' },
+    style: { ...pad('72px', '64px'), 'align-items': 'center', gap: '16px', 'background-color': 'var(--pm-primary)' },
     mobile: pad('56px', '20px'),
     children: [
       { component: 'Heading', motion: { ...rise(0), preset: 'zoom-in' }, props: { text: 'Ready to start?', level: 'h2' }, style: { color: '#ffffff', 'font-size': '36px', 'text-align': 'center', 'margin-top': '0px', 'margin-bottom': '0px' }, mobile: { 'font-size': '28px' } },
-      { component: 'Button', props: { text: 'Sign up free' }, style: { 'background-color': '#ffffff', color: '#4f46e5', ...pad('14px', '28px'), 'border-radius': '10px', 'font-weight': '700', 'border-style': 'none' } },
+      { component: 'Button', props: { text: 'Sign up free' }, style: { 'background-color': '#ffffff', color: 'var(--pm-primary)', ...pad('14px', '28px'), 'border-radius': 'var(--pm-radius)', 'font-weight': '700', 'border-style': 'none' } },
     ],
   },
   Footer: {
     label: 'Footer',
     place: 'bottom',
     component: 'Section',
-    style: { ...pad('48px', '64px'), 'background-color': '#0b1020', gap: '8px', 'align-items': 'center' },
+    style: { ...pad('48px', '64px'), 'background-color': 'var(--pm-dark)', gap: '8px', 'align-items': 'center' },
     mobile: pad('32px', '20px'),
     children: [{ component: 'Text', props: { text: '© 2026 Your Company. All rights reserved.' }, style: { color: 'rgba(255,255,255,0.6)', 'margin-top': '0px', 'margin-bottom': '0px', 'text-align': 'center' } }],
   },
