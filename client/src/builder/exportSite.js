@@ -5,6 +5,7 @@ import { generateCss } from './cssGen.js';
 import { normalizeMotion, motionAttrs, motionCss, MOTION_RUNTIME } from './motion.js';
 import { usedGoogleFonts, googleFontsHref } from './fonts.js';
 import { themeCss, themeFonts } from './theme.js';
+import { mountScene, normalize3D } from './scene3d.js';
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const escAttr = (s) => esc(s).replace(/"/g, '&quot;');
@@ -23,46 +24,21 @@ const cls = (id) => `c-${id}`;
 
 const STYLE_BIND_KEYS = ['color', 'background-color', 'font-size', 'font-family'];
 
-// 3D objects: the editor renders them with ThreeBox.jsx. Exported pages get the same scene
-// from the same Three.js version (keep in sync with client/package.json), loaded from a CDN.
+// 3D objects: the editor and the exported page run the SAME engine (scene3d.js): its
+// source is inlined here and called with the same Three.js version (keep in sync with
+// client/package.json), loaded from a CDN.
 const THREE_VERSION = '0.169.0';
-const THREE_KEYS = ['shape', 'color', 'autoRotate', 'metalness', 'roughness', 'wireframe', 'fov'];
 const THREE_SCRIPT = `  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@${THREE_VERSION}/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@${THREE_VERSION}/examples/jsm/"}}</script>
   <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-    const geometryFor = (s) => s === 'sphere' ? new THREE.SphereGeometry(1.3, 48, 48)
-      : s === 'torus' ? new THREE.TorusGeometry(0.95, 0.38, 32, 80)
-      : s === 'cone' ? new THREE.ConeGeometry(1.2, 2, 48)
-      : s === 'torusKnot' ? new THREE.TorusKnotGeometry(0.85, 0.3, 128, 24)
-      : new THREE.BoxGeometry(1.7, 1.7, 1.7);
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    const mountScene = ${mountScene.toString()};
     for (const el of document.querySelectorAll('[data-prism-3d]')) {
       let c = {};
       try { c = JSON.parse(el.getAttribute('data-prism-3d') || '{}'); } catch { c = {}; }
-      const w = el.clientWidth || 320, h = el.clientHeight || 280;
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(c.fov || 50, w / h, 0.1, 100);
-      camera.position.set(3, 2, 4.5);
-      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setSize(w, h);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      el.appendChild(renderer.domElement);
-      scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-      const key = new THREE.DirectionalLight(0xffffff, 1.1); key.position.set(5, 6, 4); scene.add(key);
-      const rim = new THREE.DirectionalLight(0x88aaff, 0.5); rim.position.set(-4, 2, -3); scene.add(rim);
-      scene.add(new THREE.Mesh(geometryFor(c.shape), new THREE.MeshStandardMaterial({
-        color: c.color || '#6366f1', metalness: c.metalness ?? 0.35, roughness: c.roughness ?? 0.4, wireframe: !!c.wireframe,
-      })));
-      const controls = new OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = true;
-      controls.enablePan = false;
-      controls.autoRotate = c.autoRotate !== false;
-      controls.autoRotateSpeed = 2.2;
-      new ResizeObserver(() => {
-        const W = el.clientWidth, H = el.clientHeight;
-        if (W && H) { renderer.setSize(W, H); camera.aspect = W / H; camera.updateProjectionMatrix(); }
-      }).observe(el);
-      (function frame() { requestAnimationFrame(frame); controls.update(); renderer.render(scene, camera); })();
+      mountScene(THREE, { OrbitControls, RoomEnvironment, GLTFLoader }, el, c);
     }
   </script>
 `;
@@ -135,8 +111,7 @@ function renderNode(instances, id, indent, components = {}, resolve = null, open
     return `${indent}<span class="${c}"${styleAttr}>${renderToStaticMarkup(createElement(Ico, { size: '100%', 'aria-hidden': true }))}</span>`;
   }
   if (inst.component === '3D') {
-    const config = {};
-    for (const k of THREE_KEYS) if (inst.props?.[k] !== undefined) config[k] = inst.props[k];
+    const config = normalize3D(inst.props); // validated: only known shapes, colours and safe model sources
     return `${indent}<div class="${c}"${styleAttr} data-prism-3d="${escAttr(esc(JSON.stringify(config)))}"></div>`;
   }
   if (def.container) {

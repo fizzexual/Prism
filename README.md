@@ -41,8 +41,10 @@ Prism is a visual website builder that runs in the browser and can place Three.j
   snapping and guides.
 - **Components** — turn any subtree into a reusable component; instances stay in sync,
   with variables and per-instance overrides. A component can't be nested in itself.
-- **3D Object** — a live three.js primitive (box, sphere, torus, cone, torus knot)
-  with material controls and auto-rotate; it is also rendered in the exported site.
+- **3D** — your own .glb models or six shapes, Glass/Chrome/Satin/Clay/Neon/Wire
+  materials with studio reflections, theme colours, and Follow-mouse, Scroll,
+  Float or Drag & spin motion. The editor and the exported site run the same
+  scene engine; 3D pauses off-screen and respects reduced motion.
 - **Pages, design tokens, asset library**, dark editor theme, undo/redo
   (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z) and keyboard shortcuts.
 - **Persistence** — autosave to localStorage (flushed when the tab is hidden or
@@ -138,7 +140,7 @@ what you export.
 
 ## Known limitations
 
-- 3D Objects are built-in primitives; importing GLTF/GLB models is not supported yet.
+- Uploaded 3D models are embedded in the project (max 8 MB each).
 - Each 3D object uses its own WebGL context; browsers cap concurrent contexts
   (~16), so keep the number of simultaneous 3D objects modest.
 - Images are stored inside the project as data URLs, so very large images can fill

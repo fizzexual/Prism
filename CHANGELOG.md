@@ -39,6 +39,12 @@ below are grouped by date and built from the git history.
   Newsletter, Footer with columns), all phone-ready, theme-linked and animated.
   Starter pages (Landing page, Portfolio, Startup) add a complete new page in
   one click.
+- 3D as Prism's signature. One scene engine runs in the editor and in the
+  exported site. Upload your own .glb model (or paste a link), pick Glass,
+  Chrome, Satin, Clay, Neon or Wire with real studio reflections, colour it
+  with the theme, and make it Follow the mouse, Rotate on scroll, Float or
+  Drag & spin. 3D pauses off-screen, respects reduced motion and frees its GPU
+  context. New Hero (3D) section.
 
 ### Fixed
 

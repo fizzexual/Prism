@@ -9,11 +9,11 @@ const SAFE_BG = /^(var\(--pm-(dark|primary|ink)\)|linear-gradient\(\d+deg,\s*var
 const tracks = (v = '') => { const m = /^repeat\((\d+)/.exec(v); return m ? Number(m[1]) : v.trim().split(/\s+/).length; };
 
 describe('section library', () => {
-  it('has 17 sections in the agreed categories', () => {
-    expect(TEMPLATES).toHaveLength(17);
+  it('has 18 sections in the agreed categories', () => {
+    expect(TEMPLATES).toHaveLength(18);
     expect(CATEGORIES).toEqual(['Navigation', 'Hero', 'Content', 'Social proof', 'Pricing', 'Help', 'Call to action', 'Footer']);
     for (const t of TEMPLATES) expect(CATEGORIES, t.label).toContain(t.category);
-    expect(new Set(TEMPLATES.map((t) => t.label)).size).toBe(17);
+    expect(new Set(TEMPLATES.map((t) => t.label)).size).toBe(18);
   });
 
   for (const t of TEMPLATES) {
@@ -50,7 +50,8 @@ describe('section library', () => {
       it('puts white text only on dark or primary backgrounds', () => {
         const walk = (id, bg) => {
           const s = base(id);
-          const here = s['background-image'] || s['background-color'] || s.background || bg;
+          const own = [s['background-image'], s['background-color'], s.background].find((v) => v && v !== 'transparent');
+          const here = own || bg; // transparent shows the parent's background
           if (s.color && WHITE.test(s.color.replace(/\s+/g, ' '))) expect(here, `${snap.instances[id].component} ${id}`).toMatch(SAFE_BG);
           for (const c of snap.instances[id].children) walk(c, here);
         };
@@ -72,5 +73,14 @@ describe('starter pages', () => {
     expect(STARTERS.map((s) => s.label)).toEqual(['Landing page', 'Portfolio', 'Startup']);
     const labels = new Set(TEMPLATES.map((t) => t.label));
     for (const s of STARTERS) for (const l of s.sections) expect(labels.has(l), `${s.label}: ${l}`).toBe(true);
+  });
+});
+
+describe('Hero (3D)', () => {
+  it('has a glass 3D object in the theme primary that follows the mouse', () => {
+    const snap = TEMPLATES.find((t) => t.label === 'Hero (3D)').build();
+    const three = Object.values(snap.instances).find((n) => n.component === '3D');
+    expect(three.props).toMatchObject({ material: 'glass', color: 'var(--pm-primary)', motion: 'mouse' });
+    expect(snap.styles[three.id].base['background-color']).toBe('transparent');
   });
 });

@@ -138,6 +138,8 @@ describe('new elements follow the site theme', async () => {
     expect(COMPONENTS.Heading.defaultStyle).toMatchObject({ color: 'var(--pm-ink)', 'font-family': 'var(--pm-font-heading)' });
     expect(COMPONENTS.Button.defaultStyle).toMatchObject({ 'background-color': 'var(--pm-primary)', 'border-radius': 'var(--pm-radius)' });
     expect(COMPONENTS.Link.defaultStyle.color).toBe('var(--pm-primary)');
+    expect(COMPONENTS['3D'].defaultStyle['background-color']).toBe('var(--pm-dark)');
+    expect(COMPONENTS['3D'].defaultProps).toMatchObject({ material: 'satin', color: 'var(--pm-primary)', motion: 'orbit' });
   });
 });
 

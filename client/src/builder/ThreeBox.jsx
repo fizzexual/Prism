@@ -1,92 +1,38 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { useBuilder } from './store.js';
+import { mountScene, normalize3D } from './scene3d.js';
 
-function makeGeometry(shape) {
-  if (shape === 'sphere') return new THREE.SphereGeometry(1.3, 48, 48);
-  if (shape === 'torus') return new THREE.TorusGeometry(0.95, 0.38, 32, 80);
-  if (shape === 'cone') return new THREE.ConeGeometry(1.2, 2, 48);
-  if (shape === 'torusKnot') return new THREE.TorusKnotGeometry(0.85, 0.3, 128, 24);
-  return new THREE.BoxGeometry(1.7, 1.7, 1.7);
-}
+const ADDONS = { OrbitControls, RoomEnvironment, GLTFLoader };
 
 /**
- * A self-contained Three.js viewport mounted into the (iframe) DOM. Renders a
- * parametric primitive with lighting + orbit controls. In edit mode the host
- * stylesheet sets `canvas { pointer-events: none }` so the element stays
- * selectable; in preview the controls are interactive.
+ * A 3D element on the canvas, rendered by the same engine as the exported site
+ * (scene3d.js). In edit mode the host stylesheet sets `canvas { pointer-events: none }`
+ * so the element stays selectable; in preview it is interactive.
  */
 export default function ThreeBox({ config = {} }) {
   const ref = useRef(null);
+  const cfg = normalize3D(config);
+  // A 3D colour can be a theme link, so re-render when the theme colours change.
+  const themeColors = useBuilder((s) => JSON.stringify(s.project?.theme?.colors || {}));
+  const key = JSON.stringify(cfg) + themeColors;
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return undefined;
-    const w = el.clientWidth || 320;
-    const h = el.clientHeight || 280;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(config.fov || 50, w / h, 0.1, 100);
-    camera.position.set(3, 2, 4.5);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(w, h);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    el.appendChild(renderer.domElement);
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-    const key = new THREE.DirectionalLight(0xffffff, 1.1);
-    key.position.set(5, 6, 4);
-    scene.add(key);
-    const rim = new THREE.DirectionalLight(0x88aaff, 0.5);
-    rim.position.set(-4, 2, -3);
-    scene.add(rim);
-
-    const geometry = makeGeometry(config.shape);
-    const material = new THREE.MeshStandardMaterial({
-      color: config.color || '#6366f1',
-      metalness: config.metalness ?? 0.35,
-      roughness: config.roughness ?? 0.4,
-      wireframe: !!config.wireframe,
-    });
-    const mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.enablePan = false;
-    controls.autoRotate = config.autoRotate !== false;
-    controls.autoRotateSpeed = 2.2;
-
-    let raf = 0;
-    const animate = () => {
-      raf = requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const ro = new ResizeObserver(() => {
-      const W = el.clientWidth;
-      const H = el.clientHeight;
-      if (W && H) {
-        renderer.setSize(W, H);
-        camera.aspect = W / H;
-        camera.updateProjectionMatrix();
-      }
-    });
-    ro.observe(el);
-
+    let handle = null;
+    // Next tick: the frame's theme CSS (a parent effect) must be applied before colours are read.
+    const t = setTimeout(() => { handle = mountScene(THREE, ADDONS, el, cfg); }, 0);
     return () => {
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-      controls.dispose();
-      geometry.dispose();
-      material.dispose();
-      renderer.dispose();
-      if (renderer.domElement.parentNode === el) el.removeChild(renderer.domElement);
+      clearTimeout(t);
+      if (handle) handle.dispose();
     };
-  }, [config.shape, config.color, config.metalness, config.roughness, config.wireframe, config.autoRotate, config.fov]);
+    // `key` captures every input of the scene.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
 
   return <div ref={ref} style={{ width: '100%', height: '100%' }} />;
 }

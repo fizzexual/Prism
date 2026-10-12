@@ -244,8 +244,9 @@ export const COMPONENTS = {
     tag: 'div',
     container: false,
     icon: Boxes,
-    defaultProps: { shape: 'torusKnot', color: '#6366f1', autoRotate: true, metalness: 0.4, roughness: 0.35, wireframe: false },
-    defaultStyle: { width: '320px', height: '280px', 'border-radius': '12px', overflow: 'hidden', 'background-color': '#0b1020' },
+    // See scene3d.js (normalize3D) for every option; colour and background follow the site theme.
+    defaultProps: { shape: 'torusKnot', material: 'satin', color: 'var(--pm-primary)', motion: 'orbit', speed: 1 },
+    defaultStyle: { width: '320px', height: '280px', 'border-radius': 'var(--pm-radius)', overflow: 'hidden', 'background-color': 'var(--pm-dark)' },
   },
 };
 
