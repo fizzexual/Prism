@@ -9,6 +9,16 @@ Prism has no versioned releases yet. The live site at
 https://fizzexual.github.io/Prism/ always runs the `main` branch. The entries
 below are grouped by date and built from the git history.
 
+## 2026-10-12
+
+### Added
+
+- Hover and pressed effects. The style panel has a Normal / Hover / Pressed
+  switch, one-click presets (Lift, Grow, Glow, Dim; Press, Sink), transition
+  duration and easing, and a live preview of the state on the canvas. The
+  exported site gets the same `:hover` / `:active` CSS. Hover only applies on
+  devices that can hover, so it never sticks on phones.
+
 ## 2026-06-22
 
 ### Added

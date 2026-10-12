@@ -11,7 +11,7 @@ const SHADOWS = [
 ];
 
 /** Opacity, visibility, blend mode, overflow, shadow. */
-export default function AppearanceSection({ id, eff, set }) {
+export default function AppearanceSection({ id, eff, set, hideVisible = false }) {
   const opacityPct = eff.opacity === '' || eff.opacity == null ? 100 : Math.round(Number(eff.opacity) * 100);
   const visible = (eff.display || '') !== 'none';
 
@@ -20,7 +20,7 @@ export default function AppearanceSection({ id, eff, set }) {
       <Field label="Opacity">
         <Slider value={opacityPct} onChange={(n) => set('opacity', n === 100 ? '' : String(n / 100))} suffix="%" />
       </Field>
-      <ToggleField label="Visible" checked={visible} onChange={(on) => setVisible(id, on)} />
+      {!hideVisible && <ToggleField label="Visible" checked={visible} onChange={(on) => setVisible(id, on)} />}
       <Field label="Blend">
         <SelectField value={eff['mix-blend-mode'] ?? ''} onChange={(v) => set('mix-blend-mode', v)} options={BLEND.map((b) => ({ value: b, label: b || 'normal' }))} />
       </Field>
