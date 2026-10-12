@@ -76,5 +76,10 @@ export function motionCss({ editor = false } = {}) {
   return `${frames}\n${names}\n${play}${hide}${reduced}`;
 }
 
-/** Inlined in <head> of exported pages: reveal [data-motion] elements as they scroll into view. */
-export const MOTION_RUNTIME = `(function(){var d=document.documentElement;if(!('IntersectionObserver' in window)||matchMedia('(prefers-reduced-motion: reduce)').matches)return;d.classList.add('prism-motion');document.addEventListener('DOMContentLoaded',function(){var io=new IntersectionObserver(function(es){es.forEach(function(e){var t=e.target,r=t.hasAttribute('data-motion-repeat');if(e.isIntersecting){t.classList.add('pm-in');if(!r)io.unobserve(t)}else if(r&&e.boundingClientRect.top>0){t.classList.remove('pm-in')}})},{rootMargin:'0px 0px -10% 0px'});document.querySelectorAll('[data-motion]').forEach(function(el){io.observe(el)})})})();`;
+/**
+ * Inlined in <head> of exported pages: reveal [data-motion] elements as they scroll
+ * into view. Safety nets so content can never stay invisible: whatever is on the
+ * first screen is revealed immediately, and if the observer never reports (some
+ * prerender/screenshot environments), everything is revealed after 2.5 s.
+ */
+export const MOTION_RUNTIME = `(function(){var d=document.documentElement;if(!('IntersectionObserver' in window)||matchMedia('(prefers-reduced-motion: reduce)').matches)return;d.classList.add('prism-motion');document.addEventListener('DOMContentLoaded',function(){var els=[].slice.call(document.querySelectorAll('[data-motion]')),seen=false,h=window.innerHeight;function show(t){t.classList.add('pm-in')}var io=new IntersectionObserver(function(es){seen=true;es.forEach(function(e){var t=e.target,r=t.hasAttribute('data-motion-repeat');if(e.isIntersecting){show(t);if(!r)io.unobserve(t)}else if(r&&e.boundingClientRect.top>0){t.classList.remove('pm-in')}})},{rootMargin:'0px 0px -10% 0px'});els.forEach(function(el){var b=el.getBoundingClientRect();if(b.top<h*0.9&&b.bottom>0)show(el);io.observe(el)});setTimeout(function(){if(!seen)els.forEach(show)},2500)})})();`;
