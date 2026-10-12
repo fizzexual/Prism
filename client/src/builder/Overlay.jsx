@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useUI, useBuilder } from './store.js';
 import { effectiveStyle } from './styleUtils.js';
+import { canvasRootId } from './model.js';
 
 const HANDLES = [
   { k: 'nw', hx: -1, hy: -1, cur: 'nwse-resize' },
@@ -19,7 +20,9 @@ export default function Overlay({ iframeRef, scale = 1 }) {
   const breakpoint = useUI((s) => s.breakpoint);
   const instances = useBuilder((s) => s.project?.instances);
   const stylesMap = useBuilder((s) => s.project?.styles);
-  const rootId = useBuilder((s) => s.project?.pages?.[0]?.rootId);
+  const activePageId = useUI((s) => s.activePageId);
+  const editingComponentId = useUI((s) => s.editingComponentId);
+  const rootId = useBuilder((s) => (s.project ? canvasRootId(s.project, { activePageId, editingComponentId }) : null));
   const selFree =
     selectedId && stylesMap
       ? ['absolute', 'fixed'].includes(effectiveStyle(stylesMap[selectedId] || {}, breakpoint).position)
@@ -69,10 +72,10 @@ export default function Overlay({ iframeRef, scale = 1 }) {
     if (r.hy === -1) { h = Math.max(8, r.h - dy); top = r.top + (r.h - h); }
     const s = r.el.style;
     s.position = 'absolute';
-    s.left = `${left}px`;
-    s.top = `${top}px`;
-    s.width = `${w}px`;
-    s.height = `${h}px`;
+    s.left = `${Math.round(left)}px`;
+    s.top = `${Math.round(top)}px`;
+    s.width = `${Math.round(w)}px`;
+    s.height = `${Math.round(h)}px`;
     s.margin = '0px';
     force((n) => (n + 1) % 1e6);
   };
@@ -83,12 +86,13 @@ export default function Overlay({ iframeRef, scale = 1 }) {
     window.removeEventListener('pointermove', onResizeMove);
     if (!r) return;
     const bp = useUI.getState().breakpoint;
-    if ((useBuilder.getState().project.styles[r.rootId]?.base || {}).position !== 'relative') {
-      useBuilder.getState().setStyle(r.rootId, 'base', 'position', 'relative');
-    }
-    useBuilder.getState().setStyles(r.id, bp, {
+    const batch = [{ id: r.id, breakpoint: bp, decls: {
       position: 'absolute', left: r.el.style.left, top: r.el.style.top, width: r.el.style.width, height: r.el.style.height, margin: '0px',
-    });
+    } }];
+    if ((useBuilder.getState().project.styles[r.rootId]?.base || {}).position !== 'relative') {
+      batch.unshift({ id: r.rootId, breakpoint: 'base', decls: { position: 'relative' } });
+    }
+    useBuilder.getState().setStylesBatch(batch); // one undo step per resize
     requestAnimationFrame(() => {
       ['position', 'left', 'top', 'width', 'height', 'margin'].forEach((p) => { r.el.style[p] = ''; });
     });
@@ -101,6 +105,7 @@ export default function Overlay({ iframeRef, scale = 1 }) {
     const el = doc?.querySelector(`[data-ws-id="${selectedId}"]`);
     if (!el) return;
     const rEl = doc.querySelector(`[data-ws-id="${rootId}"]`);
+    if (!rEl) return;
     const er = el.getBoundingClientRect();
     const rr = rEl.getBoundingClientRect();
     resizing.current = {

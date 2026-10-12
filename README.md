@@ -15,23 +15,31 @@ Prism is a visual website builder that runs in the browser and can place Three.j
 
 ## Features
 
-- **Freeform canvas** — drag elements from the palette; move, resize, and rotate
-  with snap-to-grid and live alignment guides.
-- **Component library** — Section, Container, Heading, Text, Button, Image, Icon,
-  Divider, Spacer, and **3D Object**.
-- **3D (Three.js / @react-three/fiber)** — import GLTF/GLB models (OBJ/FBX too),
-  manipulate with transform gizmos, and edit material, lighting, environment, and
-  camera. Each 3D object renders in its own viewport.
-- **Property inspector** — context-sensitive editing of layout, appearance,
-  typography, content, and 3D properties.
-- **Undo/redo** — full history (Ctrl/Cmd+Z, +Shift+Z).
-- **Layers & z-index** — reorderable layer list with lock/visibility and pages.
-- **Responsive** — desktop / tablet / mobile breakpoints with per-breakpoint
-  overrides, plus a full-screen live **Preview**.
-- **Persistence** — autosave to PostgreSQL via the API, with an offline-first
-  localStorage fallback (the app is fully usable with no database running).
-- **Code export** — download a standalone ZIP (HTML + CSS + `scene.js` for 3D +
-  bundled assets).
+- **Real HTML/CSS canvas** — the page renders in an iframe with real CSS layout.
+  Insert elements from the Add panel, drag to reorder, double-click text to edit it
+  in place.
+- **Section templates** — Navbar, Hero, Features, Call to action and Footer, each
+  responsive out of the box (columns stack and type scales down on phones).
+- **Elements** — Section, Columns, Grid, Box, Card, Heading (h1–h6), Text, Quote,
+  Link, Button, Image, Icon, Input, Textarea, Divider, Spacer and **3D Object**.
+- **Framer-style style panel** — size modes (Fill/Fit/Fixed/Relative), Stack/Grid/Block
+  layout, position (Flow/Absolute/Fixed/Sticky), transforms, appearance, filters,
+  typography, backgrounds, borders and an alignment toolbar.
+- **Breakpoints** — Desktop (1280), Tablet (768) and Mobile (390) frames side by side
+  on an infinite zoom/pan canvas; each style can be set per breakpoint.
+- **Free positioning** — make any element absolute and move/resize it with handles,
+  snapping and guides.
+- **Components** — turn any subtree into a reusable component; instances stay in sync,
+  with variables and per-instance overrides. A component can't be nested in itself.
+- **3D Object** — a live three.js primitive (box, sphere, torus, cone, torus knot)
+  with material controls and auto-rotate; it is also rendered in the exported site.
+- **Pages, design tokens, asset library**, dark editor theme, undo/redo
+  (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z) and keyboard shortcuts.
+- **Persistence** — autosave to localStorage (flushed when the tab is hidden or
+  closed, so the last edit is never lost) and to PostgreSQL when the API has a
+  database.
+- **Code export** — one self-contained HTML file per page (a ZIP for multi-page
+  sites) with responsive media queries.
 
 ## Prerequisites
 
@@ -75,34 +83,40 @@ The API port is configurable via `PORT` in `.env`.
 ```
 client/   React + Vite editor
   src/
-    state/      Zustand stores (documentStore w/ undo, editorStore)
-    elements/   registry.jsx (element types), ElementRenderer, Element3D
-    three/      loaderRegistry, useModel, R3F helpers
-    components/  Palette, Canvas, Inspector, Layers, Toolbar, Preview, Projects
-    export/     html/css/three generators + zip builder
-    lib/        geometry, snapping, api, persistence
+    main.jsx            entry: mounts builder/BuilderApp
+    builder/
+      components.jsx    element registry (tag, default props/styles, icon)
+      store.js          Zustand document store (zundo undo/redo) + UI store
+      model.js          tree helpers (subtrees, parents, canvas root, components)
+      Canvas.jsx        infinite canvas; DeviceFrame.jsx renders one breakpoint iframe
+      InstanceRender.jsx  renders the instance tree as real HTML
+      cssGen.js         styles map -> CSS (shared by canvas and export)
+      exportSite.js     standalone HTML / ZIP export (loaded on demand)
+      templates.js      section templates
+      autosaver.js, useAutosave.js, persist.js   saving
+      StylePanel.jsx, panels/   the style/inspector UI
 server/   Express + node-postgres
   src/
     app.js      express app factory (DI repo for testing)
     repo.js     PostgreSQL data access
     routes/     projects + assets
     migrations/ ordered SQL, applied on startup
-docs/     spec, plan, and extension guides
+docs/     specs, plans and the component guide
 ```
 
 ## How it works
 
-The entire project is one serializable JSON document (`Project → Page → Element`).
-It lives in a Zustand store (with `zundo` for undo/redo), is stored in PostgreSQL
-as `jsonb`, rendered by a single `ElementRenderer` (used by both the editor and the
-preview), and consumed by pure export generators. Each element type is one entry in
-`client/src/elements/registry.jsx`, which drives the palette, renderer, inspector,
-and exporter.
+A project is one serializable JSON document: `pages` (each with a root instance),
+a flat `instances` map (`{ id, component, props, children }`), a `styles` map
+(`{ [id]: { base, tablet, mobile } }` of CSS declarations), `components`, design
+`tokens` and `assets`. It lives in a Zustand store with `zundo` for undo/redo and is
+saved to localStorage and, when available, to PostgreSQL as `jsonb`. The canvas and
+the exporter both turn the `styles` map into CSS with `cssGen.js`, so what you see is
+what you export.
 
 ## Extending
 
-- **Add a component:** [docs/adding-components.md](docs/adding-components.md)
-- **Add a 3D format:** [docs/adding-3d-models.md](docs/adding-3d-models.md)
+- **Add an element:** [docs/adding-components.md](docs/adding-components.md)
 
 ## Deployment
 
@@ -112,17 +126,18 @@ and exporter.
   run `npm run migrate`, then `npm start`. Uploaded assets are stored on disk under
   `server/uploads/` (mount a persistent volume in production).
 
-## Known limitations (v1)
+## Known limitations
 
-- Export uses absolute positioning (matching the freeform editor); responsiveness
-  is driven by per-breakpoint overrides rather than automatic reflow.
-- Icon elements export as empty containers (rendered live in the editor/preview).
+- 3D Objects are built-in primitives; importing GLTF/GLB models is not supported yet.
 - Each 3D object uses its own WebGL context; browsers cap concurrent contexts
   (~16), so keep the number of simultaneous 3D objects modest.
-- OBJ/FBX import is supported best-effort; GLTF/GLB is the primary path.
+- Images are stored inside the project as data URLs, so very large images can fill
+  the browser's localStorage (the save chip turns red: "Not saved").
+- The API has no authentication. It only answers cross-origin requests from
+  localhost by default; don't expose it to the internet as is.
 
 ## Testing
 
-`npm test` runs Vitest across both workspaces — pure logic (geometry, snapping,
-store reducers, export generators, loader registry), inspector binding, and the
-server API (via an in-memory repo, no database required).
+`npm test` runs Vitest across both workspaces: the document store, autosave,
+templates, layout, transforms, CSS generation and export (including injection
+cases), and the server API (via an in-memory repo, no database required).

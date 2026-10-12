@@ -8,7 +8,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /** Create a connection pool. Reads DATABASE_URL by default. */
 export function createPool(connectionString = process.env.DATABASE_URL) {
-  return new Pool({ connectionString });
+  const pool = new Pool({ connectionString });
+  // An idle client losing its connection (DB restart) emits 'error'; unhandled, that kills the process.
+  pool.on('error', (err) => console.warn(`[db] idle connection error: ${err.message}`));
+  return pool;
 }
 
 /**

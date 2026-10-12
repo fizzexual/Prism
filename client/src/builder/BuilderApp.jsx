@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useStore } from 'zustand';
 import { Undo2, Redo2, Monitor, Tablet, Smartphone, Eye, Download, Moon, Sun } from 'lucide-react';
-import { downloadHtml } from './exportSite.js';
 import { useBuilder, useUI } from './store.js';
 import { defaultProject, findParentId, getActivePage } from './model.js';
 import { COMPONENTS, COMPONENT_LIST, isContainer } from './components.jsx';
@@ -15,14 +14,16 @@ import ComponentsPanel from './ComponentsPanel.jsx';
 import ProjectBar from './ProjectBar.jsx';
 import PagesMenu from './PagesMenu.jsx';
 import { useAutosave } from './useAutosave.js';
-import { getLastId, loadLocal, getServerId, isValidProject } from './persist.js';
+import { getLastId, loadLocal, getServerId, normalizeProject } from './persist.js';
 import { handleShortcut } from './actions.js';
 import ContextMenu from './ContextMenu.jsx';
-import { TEMPLATES } from './templates.js';
+import { TEMPLATES, templateInsertIndex } from './templates.js';
 
 function addTemplate(tpl) {
-  const rootId = getActivePage(useBuilder.getState().project, useUI.getState().activePageId).rootId;
-  const id = useBuilder.getState().pasteSnapshot(rootId, undefined, tpl.build());
+  const { project } = useBuilder.getState();
+  const rootId = getActivePage(project, useUI.getState().activePageId).rootId;
+  const index = templateInsertIndex(project, rootId, useUI.getState().selectedId, tpl);
+  const id = useBuilder.getState().pasteSnapshot(rootId, index, tpl.build());
   if (id) useUI.getState().select(id);
 }
 
@@ -68,10 +69,10 @@ export default function BuilderApp() {
   useEffect(() => {
     if (project) return;
     const lastId = getLastId();
-    const restored = lastId ? loadLocal(lastId) : null;
-    const doc = restored && isValidProject(restored) ? restored : defaultProject();
+    const restored = lastId ? normalizeProject(loadLocal(lastId)) : null;
+    const doc = restored || defaultProject();
     useBuilder.getState().loadProject(doc);
-    if (restored && isValidProject(restored)) useUI.getState().setServerId(getServerId(lastId));
+    if (restored) useUI.getState().setServerId(getServerId(lastId));
     useUI.getState().setActivePage(doc.pages[0].id);
   }, [project]);
 
@@ -119,7 +120,7 @@ export default function BuilderApp() {
           className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium ${previewMode ? 'bg-indigo-600 text-white' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'}`}>
           <Eye size={14} /> Preview
         </button>
-        <button onClick={() => downloadHtml(useBuilder.getState().project)}
+        <button onClick={() => import('./exportSite.js').then((m) => m.downloadHtml(useBuilder.getState().project))}
           className="flex items-center gap-1.5 rounded-md bg-neutral-900 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-neutral-700">
           <Download size={14} /> Export
         </button>

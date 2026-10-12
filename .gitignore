@@ -33,3 +33,8 @@ pnpm-debug.log*
 # Local tooling & logs
 .claude
 npm-install.log
+
+# Local agent records / graph
+.fway/
+graphify-out/
+.graphify-notes/

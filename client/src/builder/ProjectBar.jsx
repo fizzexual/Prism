@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { ChevronDown, Plus, Trash2, Cloud, CloudOff, Loader2, FolderOpen } from 'lucide-react';
+import { ChevronDown, Plus, Trash2, Cloud, CloudOff, Loader2, FolderOpen, AlertTriangle } from 'lucide-react';
 import { useBuilder, useUI } from './store.js';
 import { defaultProject } from './model.js';
-import { listAll, deleteProject, loadLocal, getServerId, isValidProject } from './persist.js';
+import { listAll, deleteProject, loadLocal, getServerId, normalizeProject } from './persist.js';
 import { api } from '../lib/api.js';
 
 const STATUS = {
@@ -10,6 +10,7 @@ const STATUS = {
   saving: { icon: Loader2, text: 'Saving…', cls: 'text-neutral-400' },
   cloud: { icon: Cloud, text: 'Saved to cloud', cls: 'text-emerald-500' },
   local: { icon: CloudOff, text: 'Saved locally', cls: 'text-amber-500' },
+  error: { icon: AlertTriangle, text: 'Not saved: browser storage is full', cls: 'text-red-500' },
 };
 
 function StatusChip() {
@@ -26,6 +27,8 @@ function StatusChip() {
 
 function loadInto(project, serverId) {
   useBuilder.getState().loadProject(project);
+  // Reset page + component-editing state from the previous project (else the canvas can render nothing).
+  useUI.getState().setActivePage(project.pages[0].id);
   useUI.getState().select(null);
   useUI.getState().setServerId(serverId);
   useUI.getState().setSaveStatus('idle');
@@ -50,12 +53,13 @@ export default function ProjectBar() {
     if (entry.serverId) {
       try {
         const row = await api.getProject(entry.serverId);
-        if (isValidProject(row.document)) { proj = row.document; sid = row.id; }
+        proj = normalizeProject(row.document);
+        if (proj) sid = row.id;
       } catch { /* fall back to local */ }
     }
     if (!proj) {
-      const lp = loadLocal(entry.id);
-      if (isValidProject(lp)) { proj = lp; sid = getServerId(entry.id); }
+      proj = normalizeProject(loadLocal(entry.id));
+      if (proj) sid = getServerId(entry.id);
     }
     if (proj) loadInto(proj, sid);
     setOpen(false);

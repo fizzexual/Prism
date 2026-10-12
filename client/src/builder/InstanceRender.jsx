@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { COMPONENTS, ICON_SET } from './components.jsx';
+import { COMPONENTS, ICON_SET, tagFor } from './components.jsx';
 
 // Lazy so three.js only loads when a 3D element is present.
 const ThreeBox = lazy(() => import('./ThreeBox.jsx'));
@@ -23,13 +23,17 @@ function makeResolver(comp, inst) {
  * reports the instance's id for selection, and bound props resolve to the
  * instance's variable values.
  */
-export function InstanceRender({ id, instances, components = {}, selOverride = null, resolve = null }) {
+const NONE = new Set();
+
+export function InstanceRender({ id, instances, components = {}, selOverride = null, resolve = null, open = NONE }) {
   const inst = instances[id];
   if (!inst) return null;
 
   if (inst.component === 'Instance') {
-    const comp = components[inst.props?.componentId];
-    if (!comp || !instances[comp.rootId]) return null;
+    const compId = inst.props?.componentId;
+    const comp = components[compId];
+    // A component nested inside itself would render forever: draw nothing for the inner copy.
+    if (!comp || !instances[comp.rootId] || open.has(compId)) return null;
     return (
       <InstanceRender
         id={comp.rootId}
@@ -37,13 +41,14 @@ export function InstanceRender({ id, instances, components = {}, selOverride = n
         components={components}
         selOverride={selOverride || inst.id}
         resolve={makeResolver(comp, inst)}
+        open={new Set(open).add(compId)}
       />
     );
   }
 
   const def = COMPONENTS[inst.component];
   if (!def) return null;
-  const Tag = def.tag;
+  const Tag = tagFor(inst);
   const dwid = selOverride || id;
 
   let boundText = null;
@@ -94,7 +99,7 @@ export function InstanceRender({ id, instances, components = {}, selOverride = n
     return (
       <Tag {...common}>
         {inst.children.map((childId) => (
-          <InstanceRender key={childId} id={childId} instances={instances} components={components} selOverride={selOverride} resolve={resolve} />
+          <InstanceRender key={childId} id={childId} instances={instances} components={components} selOverride={selOverride} resolve={resolve} open={open} />
         ))}
       </Tag>
     );

@@ -2,7 +2,7 @@ import { AlignLeft, AlignCenter, AlignRight, AlignJustify, Copy, Trash2, Boxes, 
 import { useBuilder, useUI } from './store.js';
 import { newId } from '../lib/ids.js';
 import { getActivePage } from './model.js';
-import { ICON_SET, isContainer } from './components.jsx';
+import { ICON_SET, isContainer, HEADING_LEVELS } from './components.jsx';
 import { effectiveStyle } from './styleUtils.js';
 import { parentContext } from './layout.js';
 import SizeSection from './panels/SizeSection.jsx';
@@ -59,6 +59,9 @@ function ContentSection({ inst }) {
   if (c === 'Heading' || c === 'Text' || c === 'Button' || c === 'Quote') {
     return (
       <Section title="Content">
+        {c === 'Heading' && (
+          <Field label="Level"><SelectField value={inst.props.level || 'h2'} onChange={(v) => setProp('level', v)} options={HEADING_LEVELS} /></Field>
+        )}
         <TextAreaField value={inst.props.text} onChange={(v) => setProp('text', v)} placeholder="Text…" />
       </Section>
     );

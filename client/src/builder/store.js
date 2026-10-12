@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { temporal } from 'zundo';
 import { COMPONENTS } from './components.jsx';
-import { createInstance, findParentId, collectSubtree, isAncestor } from './model.js';
+import { createInstance, findParentId, collectSubtree, isAncestor, referencedComponents, wouldNestComponentInItself } from './model.js';
 import { newId } from '../lib/ids.js';
 
 // In-memory clipboard for copy/paste (a serialized subtree snapshot).
@@ -77,6 +77,8 @@ export const useBuilder = create(
         set((s) => {
           if (!s.project) return s;
           if (id === newParentId || isAncestor(s.project.instances, id, newParentId)) return s;
+          const moving = referencedComponents(s.project.instances, collectSubtree(s.project.instances, id));
+          if (wouldNestComponentInItself(s.project, moving, newParentId)) return s;
           const instances = { ...s.project.instances };
           const oldParentId = findParentId(instances, id);
           if (oldParentId) {
@@ -93,25 +95,23 @@ export const useBuilder = create(
       },
 
       duplicate(id) {
-        let newId = null;
+        let cloneId = null;
         set((s) => {
           if (!s.project) return s;
           const parentId = findParentId(s.project.instances, id);
           if (!parentId) return s;
           const instances = { ...s.project.instances };
           const styles = { ...s.project.styles };
+          // Copy the node as-is (component Instances, bindings, label) with a fresh id.
           const cloneRec = (srcId) => {
             const src = instances[srcId];
-            const copy = createInstance(src.component);
-            copy.label = src.label;
-            copy.props = { ...src.props };
+            const copy = { ...JSON.parse(JSON.stringify(src)), id: newId('i') };
             styles[copy.id] = JSON.parse(JSON.stringify(styles[srcId] || {}));
             copy.children = src.children.map(cloneRec);
             instances[copy.id] = copy;
             return copy.id;
           };
-          const cloneId = cloneRec(id);
-          newId = cloneId;
+          cloneId = cloneRec(id);
           const parent = { ...instances[parentId] };
           const idx = parent.children.indexOf(id);
           const children = [...parent.children];
@@ -120,14 +120,15 @@ export const useBuilder = create(
           instances[parentId] = parent;
           return { project: { ...s.project, instances, styles } };
         });
-        return newId;
+        return cloneId;
       },
 
       /** Insert a snapshot subtree (with fresh ids) under parentId. Returns the new root id. */
       pasteSnapshot(parentId, index, snap) {
         let newRootId = null;
         set((s) => {
-          if (!s.project || !snap) return s;
+          if (!s.project || !snap || !s.project.instances[parentId]) return s;
+          if (wouldNestComponentInItself(s.project, referencedComponents(snap.instances, Object.keys(snap.instances)), parentId)) return s;
           const map = {};
           for (const oldId of Object.keys(snap.instances)) map[oldId] = newId('i');
           const instances = { ...s.project.instances };
@@ -187,6 +188,7 @@ export const useBuilder = create(
         let instId = null;
         set((s) => {
           if (!s.project || !(s.project.components || {})[compId] || !s.project.instances[parentId]) return s;
+          if (wouldNestComponentInItself(s.project, [compId], parentId)) return s;
           instId = newId('i');
           const inst = { id: instId, component: 'Instance', label: s.project.components[compId].name, props: { componentId: compId, overrides: {} }, children: [] };
           const instances = { ...s.project.instances, [instId]: inst };
@@ -321,6 +323,25 @@ export const useBuilder = create(
         });
       },
 
+      /** Set/clear declarations on several instances in ONE undo step: [{ id, breakpoint, decls }]. */
+      setStylesBatch(entries) {
+        set((s) => {
+          if (!s.project) return s;
+          const styles = { ...s.project.styles };
+          for (const { id, breakpoint, decls } of entries) {
+            const cur = { ...(styles[id] || {}) };
+            const bp = { ...(cur[breakpoint] || {}) };
+            for (const [k, val] of Object.entries(decls)) {
+              if (val === '' || val == null) delete bp[k];
+              else bp[k] = val;
+            }
+            cur[breakpoint] = bp;
+            styles[id] = cur;
+          }
+          return { project: { ...s.project, styles } };
+        });
+      },
+
       /** Set or clear one CSS declaration for an instance at a breakpoint. */
       setStyle(id, breakpoint, prop, value) {
         set((s) => {
@@ -336,7 +357,8 @@ export const useBuilder = create(
         });
       },
     }),
-    { limit: 100, partialize: (s) => ({ project: s.project }) },
+    // equality: a refused/no-op action returns the same project object, so it records no undo step.
+    { limit: 100, partialize: (s) => ({ project: s.project }), equality: (a, b) => a.project === b.project },
   ),
 );
 

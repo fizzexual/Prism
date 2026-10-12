@@ -1,11 +1,12 @@
 import { useBuilder, useUI, clipboard } from './store.js';
 import { effectiveStyle } from './styleUtils.js';
-import { findParentId, snapshotSubtree, getActivePage } from './model.js';
+import { findParentId, snapshotSubtree, canvasRootId } from './model.js';
 import { isContainer } from './components.jsx';
 
 const project = () => useBuilder.getState().project;
 const bp = () => useUI.getState().breakpoint;
-const activePage = () => getActivePage(project(), useUI.getState().activePageId);
+// The root of what the canvas shows (a page, or a component master while editing it).
+const activeRoot = () => canvasRootId(project(), useUI.getState());
 
 const nextZ = () => {
   let m = 0;
@@ -18,12 +19,12 @@ const nextZ = () => {
 
 export const isFree = (id) => ['absolute', 'fixed'].includes(effectiveStyle(project().styles[id] || {}, bp()).position);
 
-const isRoot = (id) => id === activePage().rootId;
+const isRoot = (id) => id === activeRoot();
 
 /** Where should a pasted/inserted sibling go relative to the current selection? */
 function dropTarget(selId) {
   const p = project();
-  const rootId = activePage().rootId;
+  const rootId = activeRoot();
   if (!selId || !p.instances[selId]) return { parentId: rootId, index: undefined };
   if (isContainer(p.instances[selId].component)) return { parentId: selId, index: undefined };
   const pid = findParentId(p.instances, selId);
@@ -83,8 +84,9 @@ export function sendToBack(id) {
 
 function makeFree(id, position = 'absolute') {
   const p = project();
-  const rootId = activePage().rootId;
-  const doc = document.querySelector('iframe')?.contentDocument;
+  const rootId = activeRoot();
+  // Measure in the frame of the breakpoint being edited, not always the first (desktop) frame.
+  const doc = (document.querySelector(`iframe[title="Canvas ${bp()}"]`) || document.querySelector('iframe'))?.contentDocument;
   const el = doc?.querySelector(`[data-ws-id="${id}"]`);
   const rootEl = doc?.querySelector(`[data-ws-id="${rootId}"]`);
   const decls = { position, margin: '0px', 'z-index': String(nextZ()) };
@@ -96,8 +98,9 @@ function makeFree(id, position = 'absolute') {
     decls.width = `${Math.round(er.width)}px`;
     decls.height = `${Math.round(er.height)}px`;
   }
-  if ((p.styles[rootId]?.base || {}).position !== 'relative') useBuilder.getState().setStyle(rootId, 'base', 'position', 'relative');
-  useBuilder.getState().setStyles(id, bp(), decls);
+  const batch = [{ id, breakpoint: bp(), decls }];
+  if ((p.styles[rootId]?.base || {}).position !== 'relative') batch.unshift({ id: rootId, breakpoint: 'base', decls: { position: 'relative' } });
+  useBuilder.getState().setStylesBatch(batch); // one undo step
 }
 
 function makeFlow(id) {

@@ -13,8 +13,8 @@ function readIndex() {
   }
 }
 
-export function saveLocal(project, serverId = null) {
-  localStorage.setItem(P + project.id, JSON.stringify(project));
+/** Record a project in the index (name, server id, last-opened). Small, so it fits even when the full document doesn't. */
+export function rememberProject(project, serverId = null) {
   const idx = readIndex();
   idx[project.id] = {
     id: project.id,
@@ -26,9 +26,19 @@ export function saveLocal(project, serverId = null) {
   localStorage.setItem(LAST, project.id);
 }
 
+/** Write the full document locally. Throws (e.g. QuotaExceededError) when storage is full. */
+export function saveLocal(project, serverId = null) {
+  localStorage.setItem(P + project.id, JSON.stringify(project));
+  rememberProject(project, serverId);
+}
+
 export function loadLocal(id) {
-  const raw = localStorage.getItem(P + id);
-  return raw ? JSON.parse(raw) : null;
+  try {
+    const raw = localStorage.getItem(P + id);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
 export function listLocal() {
@@ -49,6 +59,34 @@ export function deleteLocal(id) {
   if (localStorage.getItem(LAST) === id) localStorage.removeItem(LAST);
 }
 
+const DEFAULT_COLORS = ['#4f46e5', '#7c3aed', '#ec4899', '#111827', '#6b7280', '#10b981', '#f59e0b', '#ffffff'];
+const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+/**
+ * Repair an old or damaged saved project so the editor can open it: fill in missing
+ * maps/arrays and drop child ids that point nowhere. Returns null if it isn't a project.
+ */
+export function normalizeProject(p) {
+  if (!isObj(p) || !isObj(p.instances) || !Array.isArray(p.pages)) return null;
+  const instances = {};
+  for (const [id, inst] of Object.entries(p.instances)) {
+    if (!isObj(inst) || typeof inst.component !== 'string') continue;
+    instances[id] = { ...inst, id, props: isObj(inst.props) ? inst.props : {}, children: Array.isArray(inst.children) ? inst.children : [] };
+  }
+  for (const inst of Object.values(instances)) inst.children = inst.children.filter((c) => instances[c]);
+  const pages = p.pages.filter((pg) => isObj(pg) && instances[pg.rootId]);
+  if (!pages.length) return null;
+  return {
+    ...p,
+    pages,
+    instances,
+    styles: isObj(p.styles) ? p.styles : {},
+    components: isObj(p.components) ? p.components : {},
+    tokens: isObj(p.tokens) && Array.isArray(p.tokens.colors) ? p.tokens : { colors: [...DEFAULT_COLORS] },
+    assets: Array.isArray(p.assets) ? p.assets : [],
+  };
+}
+
 /** Validate a loaded object is a real builder project (guards against stale shapes). */
 export function isValidProject(p) {
   return Boolean(p && p.instances && Array.isArray(p.pages) && p.pages[0]?.rootId && p.instances[p.pages[0].rootId]);
@@ -56,9 +94,19 @@ export function isValidProject(p) {
 
 let serverDownUntil = 0;
 
+/**
+ * Save locally, then best-effort to the server. A full localStorage must not
+ * stop the server save. Status: 'cloud' | 'local' | 'error' (saved nowhere).
+ */
 export async function syncSave(project, serverId) {
-  saveLocal(project, serverId);
-  if (Date.now() < serverDownUntil) return { status: 'local', serverId };
+  let localOk = true;
+  try {
+    saveLocal(project, serverId);
+  } catch {
+    localOk = false;
+  }
+  const offline = { status: localOk ? 'local' : 'error', serverId };
+  if (Date.now() < serverDownUntil) return offline;
   try {
     if (serverId) {
       await api.saveProject(serverId, { name: project.name, document: project });
@@ -66,12 +114,12 @@ export async function syncSave(project, serverId) {
       return { status: 'cloud', serverId };
     }
     const row = await api.createProject({ name: project.name, document: project });
-    saveLocal(project, row.id);
+    try { rememberProject(project, row.id); } catch { /* index is tiny; ignore */ }
     serverDownUntil = 0;
     return { status: 'cloud', serverId: row.id };
   } catch {
     serverDownUntil = Date.now() + 30000;
-    return { status: 'local', serverId };
+    return offline;
   }
 }
 

@@ -92,8 +92,7 @@ no server or database, so projects are saved in the browser's `localStorage`.
 6. Open the pull request against `main`.
 
 For larger changes, open an issue first so we can agree on the approach.
-Guides for common extensions are in `docs/adding-components.md` and
-`docs/adding-3d-models.md`.
+The guide for adding an element is in `docs/adding-components.md`.
 
 ## Security issues
 

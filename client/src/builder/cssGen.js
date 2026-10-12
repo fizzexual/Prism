@@ -12,10 +12,22 @@ export const BREAKPOINTS = {
 
 const ORDER = ['base', 'tablet', 'mobile'];
 
+// Property names must be plain identifiers (incl. custom properties like --brand).
+const PROP_RE = /^-{0,2}[a-zA-Z_][a-zA-Z0-9_-]*$/;
+
+/**
+ * Make a user-supplied value safe inside a rule inside a <style> element: CSS-escape
+ * the characters that could end the rule ({ }) or the element (< >). Escapes keep
+ * strings and url()s meaning the same, so legitimate values are unchanged in effect.
+ */
+export function safeCssValue(v) {
+  return String(v).replace(/[<>{}]/g, (c) => `\\${c.charCodeAt(0).toString(16)} `);
+}
+
 export function declarationsToCss(decls = {}) {
   return Object.entries(decls)
-    .filter(([, v]) => v !== '' && v != null)
-    .map(([k, v]) => `${k}: ${v};`)
+    .filter(([k, v]) => v !== '' && v != null && PROP_RE.test(k))
+    .map(([k, v]) => `${k}: ${safeCssValue(v)};`)
     .join(' ');
 }
 
