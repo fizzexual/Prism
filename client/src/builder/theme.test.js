@@ -106,6 +106,7 @@ describe('presets are readable (WCAG AA 4.5:1)', async () => {
       expect(contrastRatio('#ffffff', c.primary)).toBeGreaterThanOrEqual(4.5); // buttons, CTA band
       expect(contrastRatio('#ffffff', c.dark)).toBeGreaterThanOrEqual(4.5); // hero / footer text
       expect(contrastRatio('#ffffff', c.ink)).toBeGreaterThanOrEqual(4.5); // dark buttons (navbar)
+      expect(contrastRatio(c.primary, c.surface)).toBeGreaterThanOrEqual(4.5); // eyebrows, stats, links on the page
       expect(contrastRatio(c.ink, c.surface)).toBeGreaterThanOrEqual(7);
       expect(contrastRatio(c.muted, c.surface)).toBeGreaterThanOrEqual(4.5);
       expect(contrastRatio(c.muted, '#ffffff')).toBeGreaterThanOrEqual(4.5); // muted text on white cards

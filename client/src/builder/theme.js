@@ -32,7 +32,7 @@ export const THEME_PRESETS = [
   preset('sunset', 'Sunset', { primary: '#c2410c', accent: '#e11d48', ink: '#1c1917', muted: '#78716c', surface: '#fffbf5', dark: '#431407' }, 'Fraunces', 'DM Sans', 18),
   preset('forest', 'Forest', { primary: '#15803d', accent: '#ca8a04', ink: '#14231a', muted: '#57705f', surface: '#f7faf5', dark: '#0c2416' }, 'Bricolage Grotesque', 'Manrope', 12),
   preset('mono', 'Mono', { primary: '#111111', accent: '#ff4d00', ink: '#111111', muted: '#6b6b6b', surface: '#ffffff', dark: '#0a0a0a' }, 'Syne', 'Inter', 0),
-  preset('candy', 'Candy', { primary: '#db2777', accent: '#7c3aed', ink: '#2e1065', muted: '#6d5a92', surface: '#fff7fb', dark: '#3b0764' }, 'Outfit', 'Outfit', 24),
+  preset('candy', 'Candy', { primary: '#be185d', accent: '#7c3aed', ink: '#2e1065', muted: '#6d5a92', surface: '#fff7fb', dark: '#3b0764' }, 'Outfit', 'Outfit', 24),
 ];
 
 const HEX = /^#[0-9a-f]{6}$/i;
