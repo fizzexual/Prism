@@ -13,6 +13,7 @@ function build(spec) {
     const inst = createInstance(s.component);
     if (s.props) Object.assign(inst.props, s.props);
     if (s.label) inst.label = s.label;
+    if (s.motion) inst.motion = { ...s.motion };
     styles[inst.id] = {
       base: { ...(COMPONENTS[s.component].defaultStyle || {}), ...(s.style || {}) },
       ...(s.tablet ? { tablet: { ...s.tablet } } : {}),
@@ -25,6 +26,9 @@ function build(spec) {
   const rootId = make(spec);
   return { rootId, instances, styles };
 }
+
+// Entrance animations the templates ship with (see motion.js).
+const rise = (delay = 0) => ({ preset: 'fade-up', duration: 800, delay, easing: 'smooth' });
 
 const pad = (y, x) => ({ 'padding-top': y, 'padding-bottom': y, 'padding-left': x, 'padding-right': x });
 
@@ -57,9 +61,9 @@ const SPECS = {
     tablet: pad('80px', '40px'),
     mobile: pad('64px', '20px'),
     children: [
-      { component: 'Heading', props: { text: 'Build something amazing', level: 'h1' }, style: { 'font-size': '56px', 'font-weight': '800', color: '#ffffff', 'text-align': 'center', 'max-width': '760px', 'margin-top': '0px', 'margin-bottom': '0px', 'line-height': '1.1' }, tablet: { 'font-size': '44px' }, mobile: { 'font-size': '34px' } },
-      { component: 'Text', props: { text: 'A modern landing page, designed visually in minutes.' }, style: { 'font-size': '20px', color: 'rgba(255,255,255,0.7)', 'text-align': 'center', 'max-width': '560px', 'margin-top': '0px', 'margin-bottom': '0px' }, mobile: { 'font-size': '17px' } },
-      { component: 'Button', props: { text: 'Get started' }, style: { 'background-color': '#4f46e5', color: '#ffffff', ...pad('14px', '28px'), 'border-radius': '10px', 'font-size': '16px', 'font-weight': '700', 'border-style': 'none' } },
+      { component: 'Heading', motion: rise(0), props: { text: 'Build something amazing', level: 'h1' }, style: { 'font-size': '56px', 'font-weight': '800', color: '#ffffff', 'text-align': 'center', 'max-width': '760px', 'margin-top': '0px', 'margin-bottom': '0px', 'line-height': '1.1' }, tablet: { 'font-size': '44px' }, mobile: { 'font-size': '34px' } },
+      { component: 'Text', motion: rise(100), props: { text: 'A modern landing page, designed visually in minutes.' }, style: { 'font-size': '20px', color: 'rgba(255,255,255,0.7)', 'text-align': 'center', 'max-width': '560px', 'margin-top': '0px', 'margin-bottom': '0px' }, mobile: { 'font-size': '17px' } },
+      { component: 'Button', motion: rise(200), props: { text: 'Get started' }, style: { 'background-color': '#4f46e5', color: '#ffffff', ...pad('14px', '28px'), 'border-radius': '10px', 'font-size': '16px', 'font-weight': '700', 'border-style': 'none' } },
     ],
   },
   Features: {
@@ -69,9 +73,10 @@ const SPECS = {
     tablet: pad('64px', '32px'),
     mobile: { ...pad('56px', '20px'), gap: '28px' },
     children: [
-      { component: 'Heading', props: { text: 'Why choose us', level: 'h2' }, style: { 'font-size': '36px', 'font-weight': '700', 'text-align': 'center', 'margin-top': '0px', 'margin-bottom': '0px' }, mobile: { 'font-size': '28px' } },
+      { component: 'Heading', motion: rise(0), props: { text: 'Why choose us', level: 'h2' }, style: { 'font-size': '36px', 'font-weight': '700', 'text-align': 'center', 'margin-top': '0px', 'margin-bottom': '0px' }, mobile: { 'font-size': '28px' } },
       {
         component: 'Columns',
+        motion: { ...rise(100), stagger: 100 },
         style: { gap: '24px', 'align-items': 'stretch', width: '100%', 'max-width': '1000px' },
         mobile: { 'flex-direction': 'column', gap: '16px' },
         children: [card('Fast', 'Lightning quick to build and ship.'), card('Flexible', 'Style anything, pixel by pixel.'), card('Simple', 'No code required at all.')],
@@ -84,7 +89,7 @@ const SPECS = {
     style: { ...pad('72px', '64px'), 'align-items': 'center', gap: '16px', 'background-color': '#4f46e5' },
     mobile: pad('56px', '20px'),
     children: [
-      { component: 'Heading', props: { text: 'Ready to start?', level: 'h2' }, style: { color: '#ffffff', 'font-size': '36px', 'text-align': 'center', 'margin-top': '0px', 'margin-bottom': '0px' }, mobile: { 'font-size': '28px' } },
+      { component: 'Heading', motion: { ...rise(0), preset: 'zoom-in' }, props: { text: 'Ready to start?', level: 'h2' }, style: { color: '#ffffff', 'font-size': '36px', 'text-align': 'center', 'margin-top': '0px', 'margin-bottom': '0px' }, mobile: { 'font-size': '28px' } },
       { component: 'Button', props: { text: 'Sign up free' }, style: { 'background-color': '#ffffff', color: '#4f46e5', ...pad('14px', '28px'), 'border-radius': '10px', 'font-weight': '700', 'border-style': 'none' } },
     ],
   },
