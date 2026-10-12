@@ -115,3 +115,31 @@ describe('style state in the UI store', () => {
     expect(useUI.getState().styleState).toBe('normal');
   });
 });
+
+describe('setMotion', () => {
+  it('sets and clears an element animation in one undo step each', () => {
+    const section = P().instances[root()].children[0];
+    const n = history();
+    B().setMotion(section, { preset: 'fade-up', duration: 800 });
+    expect(P().instances[section].motion).toEqual({ preset: 'fade-up', duration: 800 });
+    expect(history()).toBe(n + 1);
+    B().setMotion(section, null);
+    expect(P().instances[section].motion).toBeUndefined();
+    expect(history()).toBe(n + 2);
+  });
+
+  it('duplicate keeps the animation', () => {
+    const section = P().instances[root()].children[0];
+    B().setMotion(section, { preset: 'zoom-in' });
+    const copy = B().duplicate(section);
+    expect(P().instances[copy].motion).toEqual({ preset: 'zoom-in' });
+  });
+
+  it('copy/paste keeps the animation', async () => {
+    const { snapshotSubtree } = await import('./model.js');
+    const section = P().instances[root()].children[0];
+    B().setMotion(section, { preset: 'blur-in' });
+    const pasted = B().pasteSnapshot(root(), undefined, snapshotSubtree(P(), section));
+    expect(P().instances[pasted].motion).toEqual({ preset: 'blur-in' });
+  });
+});
