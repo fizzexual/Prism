@@ -107,3 +107,9 @@ export function applyThemeBatch(project) {
   }
   return [...out.values()];
 }
+
+/** Curated Google Font families the theme uses (for loading). */
+export function themeFonts(theme) {
+  const t = normalizeTheme(theme);
+  return [t.fonts.heading, t.fonts.body].filter(Boolean);
+}

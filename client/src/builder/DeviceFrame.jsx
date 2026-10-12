@@ -10,6 +10,7 @@ import { InstanceRender } from './InstanceRender.jsx';
 import { motionCss } from './motion.js';
 import { playAll } from './canvasMotion.js';
 import { usedGoogleFonts, googleFontsHref } from './fonts.js';
+import { themeCss, themeFonts } from './theme.js';
 import Overlay from './Overlay.jsx';
 
 const RESET = `*,*::before,*::after{box-sizing:border-box}html,body{margin:0;padding:0}body{min-height:100%}img{max-width:100%}`;
@@ -78,6 +79,7 @@ function snapFree(rect, others, pageW, pageH, t = 6) {
 export default function DeviceFrame({ breakpoint, scale, isActive, overlayLayer }) {
   const project = useBuilder((s) => s.project);
   const styles = project?.styles;
+  const theme = project?.theme;
   const previewMode = useUI((s) => s.previewMode);
   const activePageId = useUI((s) => s.activePageId);
   const editingComponentId = useUI((s) => s.editingComponentId);
@@ -110,14 +112,15 @@ export default function DeviceFrame({ breakpoint, scale, isActive, overlayLayer 
   }, []);
 
   useEffect(() => {
-    if (wsStyleRef.current) wsStyleRef.current.textContent = generateCss(styles || {}, undefined, { preview: true });
-    // Load the Google Fonts the site uses (only touch the link when the set changes).
+    if (wsStyleRef.current) wsStyleRef.current.textContent = `${themeCss(theme)}
+${generateCss(styles || {}, undefined, { preview: true })}`;
+    // Load the Google Fonts the site and its theme use (only touch the link when the set changes).
     const link = iframeRef.current?.contentDocument?.getElementById('gfonts');
-    const href = googleFontsHref(usedGoogleFonts(styles || {}));
+    const href = googleFontsHref([...new Set([...usedGoogleFonts(styles || {}), ...themeFonts(theme)])]);
     if (link && (link.getAttribute('href') || null) !== href) {
       if (href) link.setAttribute('href', href); else link.removeAttribute('href');
     }
-  }, [styles]);
+  }, [styles, theme]);
 
   // While the style panel edits Hover/Pressed, show that state on the selected element
   // (matched by the [data-ws-state] preview rules) without needing the mouse over it.

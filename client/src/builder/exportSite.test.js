@@ -162,3 +162,21 @@ describe('exportHtml with Google Fonts', () => {
     expect(html).not.toContain('fonts.googleapis.com');
   });
 });
+
+describe('exportHtml with a site theme', () => {
+  it('declares the theme variables and loads theme fonts', () => {
+    const p = project({ h: { component: 'Heading', props: { text: 'Hi' }, children: [] } });
+    p.theme = { colors: { primary: '#ea580c', accent: '#e11d48', ink: '#1c1917', muted: '#78716c', surface: '#fffbf5', dark: '#431407' }, fonts: { heading: 'Fraunces', body: 'DM Sans' }, radius: 18 };
+    p.styles = { h: { base: { color: 'var(--pm-primary)', 'font-family': 'var(--pm-font-heading)' } } };
+    const html = exportHtml(p);
+    expect(html).toContain(':root { --pm-primary: #ea580c;');
+    expect(html).toContain('--pm-radius: 18px;');
+    expect(html).toContain('.c-h { color: var(--pm-primary); font-family: var(--pm-font-heading); }');
+    expect(html).toMatch(/fonts\.googleapis\.com\/css2\?family=Fraunces[^"]*family=DM\+Sans/);
+  });
+
+  it('an old project without a theme still exports with the default variables', () => {
+    const html = exportHtml(project({ h: { component: 'Heading', props: { text: 'Hi' }, children: [] } }));
+    expect(html).toContain('--pm-primary: #4f46e5;');
+  });
+});
