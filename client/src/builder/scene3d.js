@@ -91,8 +91,10 @@ export function mountScene(THREE, addons, el, cfg) {
   key.position.set(4, 6, 5);
   scene.add(key);
 
+  // Slightly above, aimed at the centre, far enough back that a tilted object never clips.
   const camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
-  camera.position.set(0, 0.6, 6);
+  camera.position.set(0, 0.6, 6.8);
+  camera.lookAt(0, 0, 0);
 
   const color = resolveColor(cfg.color);
   const makeMaterial = () => {

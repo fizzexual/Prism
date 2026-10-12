@@ -77,6 +77,12 @@ describe('mountScene (rebuilt from source, as in the export)', () => {
     expect(mount({ material: 'wire' }).of('MeshBasicMaterial')[0].args[0]).toMatchObject({ wireframe: true });
   });
 
+  it('frames the object: the camera aims at the centre from far enough back', () => {
+    const cam = mount({}).of('PerspectiveCamera')[0];
+    expect(cam.calls.find(([k]) => k === 'lookAt')?.[1]).toEqual([0, 0, 0]);
+    expect(cam.position.z).toBeGreaterThanOrEqual(6.5);
+  });
+
   it('adds a reflective studio environment', () => {
     expect(mount({}).of('RoomEnvironment')).toHaveLength(1);
   });
