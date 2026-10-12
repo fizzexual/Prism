@@ -20,6 +20,19 @@ function withBatch(stylesIn, entries) {
   return styles;
 }
 
+/** Copy a snapshot's nodes (fresh ids) into the given instances/styles maps (mutated); returns the new root id. */
+function copySnapshotInto(instances, styles, snap) {
+  const map = {};
+  for (const oldId of Object.keys(snap.instances)) map[oldId] = newId('i');
+  for (const oldId of Object.keys(snap.instances)) {
+    const src = snap.instances[oldId];
+    const nid = map[oldId];
+    instances[nid] = { ...src, id: nid, props: { ...src.props }, children: src.children.map((c) => map[c]) };
+    styles[nid] = JSON.parse(JSON.stringify(snap.styles[oldId] || {}));
+  }
+  return map[snap.rootId];
+}
+
 // In-memory clipboard for copy/paste (a serialized subtree snapshot).
 let clipboardSnap = null;
 export const clipboard = { set: (v) => { clipboardSnap = v; }, get: () => clipboardSnap };
@@ -145,17 +158,9 @@ export const useBuilder = create(
         set((s) => {
           if (!s.project || !snap || !s.project.instances[parentId]) return s;
           if (wouldNestComponentInItself(s.project, referencedComponents(snap.instances, Object.keys(snap.instances)), parentId)) return s;
-          const map = {};
-          for (const oldId of Object.keys(snap.instances)) map[oldId] = newId('i');
           const instances = { ...s.project.instances };
           const styles = { ...s.project.styles };
-          for (const oldId of Object.keys(snap.instances)) {
-            const src = snap.instances[oldId];
-            const nid = map[oldId];
-            instances[nid] = { ...src, id: nid, props: { ...src.props }, children: src.children.map((c) => map[c]) };
-            styles[nid] = JSON.parse(JSON.stringify(snap.styles[oldId] || {}));
-          }
-          newRootId = map[snap.rootId];
+          newRootId = copySnapshotInto(instances, styles, snap);
           const parent = { ...instances[parentId] };
           const kids = [...parent.children];
           kids.splice(index ?? kids.length, 0, newRootId);
@@ -306,6 +311,19 @@ export const useBuilder = create(
               pages: [...s.project.pages, { id: pageId, name, rootId: body.id }],
             },
           };
+        });
+        return pageId;
+      },
+      /** Add a page filled with section snapshots (a starter page), in one undo step. Returns the page id. */
+      addPageWithSections(name, snaps) {
+        const body = createInstance('Body');
+        const pageId = newId('page');
+        set((s) => {
+          if (!s.project) return s;
+          const instances = { ...s.project.instances, [body.id]: body };
+          const styles = { ...s.project.styles, [body.id]: { base: { ...COMPONENTS.Body.defaultStyle } } };
+          body.children = snaps.map((snap) => copySnapshotInto(instances, styles, snap));
+          return { project: { ...s.project, instances, styles, pages: [...s.project.pages, { id: pageId, name, rootId: body.id }] } };
         });
         return pageId;
       },

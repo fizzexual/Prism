@@ -170,3 +170,28 @@ describe('themes', () => {
     expect(history()).toBe(n + 1);
   });
 });
+
+describe('addPageWithSections (starter pages)', () => {
+  it('adds a new page filled with the sections in order, in one undo step, leaving other pages alone', async () => {
+    const { STARTERS, buildStarter } = await import('./templates.js');
+    const before = P().pages.map((p) => ({ ...p }));
+    const homeKids = [...P().instances[root()].children];
+    const n = history();
+    const starter = STARTERS.find((s) => s.label === 'Portfolio');
+    const pageId = B().addPageWithSections('Portfolio', buildStarter(starter));
+    expect(history()).toBe(n + 1);
+    const page = P().pages.find((p) => p.id === pageId);
+    expect(page.name).toBe('Portfolio');
+    expect(P().instances[page.rootId].children.map((id) => P().instances[id].label)).toEqual(starter.sections);
+    expect(P().pages.slice(0, before.length)).toEqual(before);
+    expect(P().instances[root()].children).toEqual(homeKids);
+  });
+
+  it('gives every inserted node a fresh id (two starters never collide)', async () => {
+    const { STARTERS, buildStarter } = await import('./templates.js');
+    const a = B().addPageWithSections('A', buildStarter(STARTERS[1]));
+    const b = B().addPageWithSections('B', buildStarter(STARTERS[1]));
+    const ids = (pid) => collectSubtree(P().instances, P().pages.find((p) => p.id === pid).rootId);
+    expect(ids(a).filter((x) => ids(b).includes(x))).toEqual([]);
+  });
+});
