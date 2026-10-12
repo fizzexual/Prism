@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useStore } from 'zustand';
 import { Undo2, Redo2, Monitor, Tablet, Smartphone, Eye, Download, Moon, Sun } from 'lucide-react';
-import { downloadHtml } from './exportSite.js';
 import { useBuilder, useUI } from './store.js';
 import { defaultProject, findParentId, getActivePage } from './model.js';
 import { COMPONENTS, COMPONENT_LIST, isContainer } from './components.jsx';
@@ -121,7 +120,7 @@ export default function BuilderApp() {
           className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium ${previewMode ? 'bg-indigo-600 text-white' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'}`}>
           <Eye size={14} /> Preview
         </button>
-        <button onClick={() => downloadHtml(useBuilder.getState().project)}
+        <button onClick={() => import('./exportSite.js').then((m) => m.downloadHtml(useBuilder.getState().project))}
           className="flex items-center gap-1.5 rounded-md bg-neutral-900 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-neutral-700">
           <Download size={14} /> Export
         </button>

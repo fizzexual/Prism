@@ -74,6 +74,13 @@ export function wouldNestComponentInItself(project, compIds, parentId) {
   return false;
 }
 
+/** The root the canvas is editing: the component master while editing one, else the active page's root. */
+export function canvasRootId(project, { activePageId, editingComponentId } = {}) {
+  const comp = editingComponentId ? project?.components?.[editingComponentId] : null;
+  if (comp && project.instances[comp.rootId]) return comp.rootId;
+  return getActivePage(project, activePageId)?.rootId ?? null;
+}
+
 /** Resolve the active page (falls back to the first page). */
 export function getActivePage(project, activePageId) {
   if (!project) return null;

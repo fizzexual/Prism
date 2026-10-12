@@ -81,3 +81,27 @@ describe('undo history', () => {
     expect(history()).toBe(n);
   });
 });
+
+describe('canvas root + batched styles', () => {
+  it('canvasRootId is the active page root, or the component master while editing one', async () => {
+    const { canvasRootId } = await import('./model.js');
+    const pageId = B().addPage('Two');
+    const page2Root = P().pages.find((p) => p.id === pageId).rootId;
+    expect(canvasRootId(P(), { activePageId: pageId, editingComponentId: null })).toBe(page2Root);
+    const { compId, masterId } = makeComponentA();
+    expect(canvasRootId(P(), { activePageId: pageId, editingComponentId: compId })).toBe(masterId);
+    expect(canvasRootId(P(), { activePageId: pageId, editingComponentId: 'gone' })).toBe(page2Root);
+  });
+
+  it('setStylesBatch changes several elements in one undo step', () => {
+    const section = P().instances[root()].children[0];
+    const n = history();
+    B().setStylesBatch([
+      { id: root(), breakpoint: 'base', decls: { position: 'relative' } },
+      { id: section, breakpoint: 'mobile', decls: { position: 'absolute', left: '10px' } },
+    ]);
+    expect(history()).toBe(n + 1);
+    expect(P().styles[root()].base.position).toBe('relative');
+    expect(P().styles[section].mobile).toMatchObject({ position: 'absolute', left: '10px' });
+  });
+});

@@ -323,6 +323,25 @@ export const useBuilder = create(
         });
       },
 
+      /** Set/clear declarations on several instances in ONE undo step: [{ id, breakpoint, decls }]. */
+      setStylesBatch(entries) {
+        set((s) => {
+          if (!s.project) return s;
+          const styles = { ...s.project.styles };
+          for (const { id, breakpoint, decls } of entries) {
+            const cur = { ...(styles[id] || {}) };
+            const bp = { ...(cur[breakpoint] || {}) };
+            for (const [k, val] of Object.entries(decls)) {
+              if (val === '' || val == null) delete bp[k];
+              else bp[k] = val;
+            }
+            cur[breakpoint] = bp;
+            styles[id] = cur;
+          }
+          return { project: { ...s.project, styles } };
+        });
+      },
+
       /** Set or clear one CSS declaration for an instance at a breakpoint. */
       setStyle(id, breakpoint, prop, value) {
         set((s) => {
