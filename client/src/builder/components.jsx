@@ -156,7 +156,7 @@ export const COMPONENTS = {
     container: false,
     icon: LinkIcon,
     defaultProps: { text: 'Link', href: '#' },
-    defaultStyle: { color: '#4f46e5', 'text-decoration-line': 'underline' },
+    defaultStyle: { color: 'var(--pm-primary)', 'text-decoration-line': 'underline' },
   },
   Button: {
     label: 'Button',
