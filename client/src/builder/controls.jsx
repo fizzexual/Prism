@@ -270,8 +270,10 @@ export function ColorField({ value, onChange }) {
       />
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-8 z-50 rounded-lg bg-white p-2 shadow-xl ring-1 ring-black/10">
+          {/* preventDefault: this sits inside Field's <label>, whose default click action would
+              re-click the swatch button and close/reopen the picker. */}
+          <div className="fixed inset-0 z-40" onClick={(e) => { e.preventDefault(); setOpen(false); }} />
+          <div className="absolute right-0 top-8 z-50 rounded-lg bg-white p-2 shadow-xl ring-1 ring-black/10" onClick={(e) => e.preventDefault()}>
             <HexColorPicker color={/^#/.test(shown) ? shown : '#000000'} onChange={onChange} />
             <div className="mt-2 flex w-[200px] flex-wrap gap-1" aria-label="Theme colors">
               {THEME_COLORS.map(({ key, label }) => (
