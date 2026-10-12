@@ -27,8 +27,8 @@ They need no external images and no network. You can drop an Image into any tile
 4. Headings use `var(--pm-font-heading)`.
 5. No raw theme hex (#4f46e5, #111827, #0b1020, …). Theme colours are `var(--pm-*)`,
    so every section restyles with the theme.
-6. White text only on `dark` or `primary` backgrounds (the pairs the presets guarantee ≥ 4.5:1).
-7. Has an entrance animation somewhere.
+6. White text only on `dark`, `primary` or `ink` backgrounds (the pairs the presets guarantee ≥ 4.5:1).
+7. Has an entrance animation somewhere (except Navigation and Footer — they should simply be there).
 
 Checked in a real Chrome as well: each section at 390px has no horizontal scroll,
 and a contrast audit runs across all 6 themes.
