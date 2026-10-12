@@ -25,13 +25,14 @@ export const DEFAULT_THEME = {
 
 const preset = (key, label, colors, heading, body, radius) => ({ key, label, theme: { colors, fonts: { heading, body }, radius } });
 
+// Every preset passes WCAG AA (4.5:1) for white on primary/dark and text/muted on surface — see theme.test.js.
 export const THEME_PRESETS = [
   preset('indigo', 'Indigo', DEFAULT_THEME.colors, 'Inter', 'Inter', 10),
-  preset('midnight', 'Midnight', { primary: '#06b6d4', accent: '#a78bfa', ink: '#0f172a', muted: '#64748b', surface: '#ffffff', dark: '#020617' }, 'Space Grotesk', 'Inter', 14),
-  preset('sunset', 'Sunset', { primary: '#ea580c', accent: '#e11d48', ink: '#1c1917', muted: '#78716c', surface: '#fffbf5', dark: '#431407' }, 'Fraunces', 'DM Sans', 18),
-  preset('forest', 'Forest', { primary: '#16a34a', accent: '#ca8a04', ink: '#14231a', muted: '#57705f', surface: '#f7faf5', dark: '#0c2416' }, 'Bricolage Grotesque', 'Manrope', 12),
+  preset('midnight', 'Midnight', { primary: '#0e7490', accent: '#a78bfa', ink: '#0f172a', muted: '#64748b', surface: '#ffffff', dark: '#020617' }, 'Space Grotesk', 'Inter', 14),
+  preset('sunset', 'Sunset', { primary: '#c2410c', accent: '#e11d48', ink: '#1c1917', muted: '#78716c', surface: '#fffbf5', dark: '#431407' }, 'Fraunces', 'DM Sans', 18),
+  preset('forest', 'Forest', { primary: '#15803d', accent: '#ca8a04', ink: '#14231a', muted: '#57705f', surface: '#f7faf5', dark: '#0c2416' }, 'Bricolage Grotesque', 'Manrope', 12),
   preset('mono', 'Mono', { primary: '#111111', accent: '#ff4d00', ink: '#111111', muted: '#6b6b6b', surface: '#ffffff', dark: '#0a0a0a' }, 'Syne', 'Inter', 0),
-  preset('candy', 'Candy', { primary: '#db2777', accent: '#7c3aed', ink: '#2e1065', muted: '#7c6f99', surface: '#fff7fb', dark: '#3b0764' }, 'Outfit', 'Outfit', 24),
+  preset('candy', 'Candy', { primary: '#db2777', accent: '#7c3aed', ink: '#2e1065', muted: '#6d5a92', surface: '#fff7fb', dark: '#3b0764' }, 'Outfit', 'Outfit', 24),
 ];
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -79,7 +80,7 @@ export function resolveThemeValue(value, theme) {
  * setStylesBatch entries that make the site follow its theme:
  *  - colours equal to a current theme colour (except white) become that colour's variable
  *    (any breakpoint or state), so existing pages restyle when the theme changes;
- *  - page roots use surface / ink / body font; headings use ink and the heading font.
+ *  - page roots use surface / ink / body font; headings use the heading font.
  * Entries are merged per (id, breakpoint).
  */
 export function applyThemeBatch(project) {
@@ -104,7 +105,9 @@ export function applyThemeBatch(project) {
     put(p.rootId, 'base', { 'background-color': themeVar('surface'), color: themeVar('ink'), 'font-family': 'var(--pm-font-body)' });
   }
   for (const inst of Object.values(project.instances || {})) {
-    if (inst.component === 'Heading') put(inst.id, 'base', { color: themeVar('ink'), 'font-family': 'var(--pm-font-heading)' });
+    // Font only: a heading's colour changes just when it matched the old theme (linked above),
+    // so white headings on dark bands keep their contrast.
+    if (inst.component === 'Heading') put(inst.id, 'base', { 'font-family': 'var(--pm-font-heading)' });
   }
   return [...out.values()];
 }
@@ -113,4 +116,14 @@ export function applyThemeBatch(project) {
 export function themeFonts(theme) {
   const t = normalizeTheme(theme);
   return [t.fonts.heading, t.fonts.body].filter(Boolean);
+}
+
+/** WCAG contrast ratio between two hex colours (1–21). */
+export function contrastRatio(a, b) {
+  const lum = (hex) => {
+    const [r, g, bl] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+  };
+  const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+  return (x + 0.05) / (y + 0.05);
 }

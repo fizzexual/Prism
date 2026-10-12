@@ -80,3 +80,34 @@ describe('applyThemeBatch links corner radii', () => {
     expect(batch.find((e) => e.id === 'c')).toBeUndefined(); // pills stay pills
   });
 });
+
+describe('applyThemeBatch keeps contrast', () => {
+  it('does not repaint a white heading on a dark band (only matching colours are linked)', () => {
+    const project = {
+      theme: DEFAULT_THEME,
+      pages: [],
+      instances: { h: { id: 'h', component: 'Heading' } },
+      styles: { h: { base: { color: '#ffffff' } } },
+    };
+    const entry = applyThemeBatch(project).find((e) => e.id === 'h');
+    expect(entry.decls).toEqual({ 'font-family': 'var(--pm-font-heading)' });
+  });
+});
+
+describe('presets are readable (WCAG AA 4.5:1)', async () => {
+  const { contrastRatio } = await import('./theme.js');
+  it('contrastRatio matches known values', () => {
+    expect(contrastRatio('#ffffff', '#000000')).toBeCloseTo(21, 0);
+    expect(contrastRatio('#ffffff', '#4f46e5')).toBeCloseTo(6.29, 1);
+  });
+  for (const p of THEME_PRESETS) {
+    it(`${p.label}: white on primary/dark, text and muted on surface`, () => {
+      const c = p.theme.colors;
+      expect(contrastRatio('#ffffff', c.primary)).toBeGreaterThanOrEqual(4.5); // buttons, CTA band
+      expect(contrastRatio('#ffffff', c.dark)).toBeGreaterThanOrEqual(4.5); // hero / footer text
+      expect(contrastRatio(c.ink, c.surface)).toBeGreaterThanOrEqual(7);
+      expect(contrastRatio(c.muted, c.surface)).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(c.muted, '#ffffff')).toBeGreaterThanOrEqual(4.5); // muted text on white cards
+    });
+  }
+});
