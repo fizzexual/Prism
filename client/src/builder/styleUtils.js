@@ -5,10 +5,14 @@ const CASCADE = {
   mobile: ['base', 'tablet', 'mobile'],
 };
 
-/** Effective (cascaded) declarations for an instance at a breakpoint. */
-export function effectiveStyle(perId = {}, breakpoint = 'base') {
+// Interaction states layer on top of the breakpoint cascade (pressed implies hover).
+const STATE_CASCADE = { normal: [], hover: ['hover'], pressed: ['hover', 'pressed'] };
+
+/** Effective (cascaded) declarations for an instance at a breakpoint, optionally in a state. */
+export function effectiveStyle(perId = {}, breakpoint = 'base', state = 'normal') {
   const out = {};
   for (const bp of CASCADE[breakpoint] || ['base']) Object.assign(out, perId[bp] || {});
+  for (const st of STATE_CASCADE[state] || []) Object.assign(out, perId[st] || {});
   return out;
 }
 

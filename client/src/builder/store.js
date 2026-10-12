@@ -373,9 +373,11 @@ export const useUI = create((set) => ({
   menu: null, // { x, y, id } context menu
   activePageId: null,
   editingComponentId: null, // when set, the canvas edits a component master instead of a page
+  styleState: 'normal', // 'normal' | 'hover' | 'pressed' — which state the style panel edits
   setActivePage: (activePageId) => set({ activePageId, selectedId: null, menu: null, editingComponentId: null }),
   setEditingComponent: (editingComponentId) => set({ editingComponentId, selectedId: null, menu: null }),
-  select: (id) => set({ selectedId: id }),
+  select: (id) => set((s) => (s.selectedId === id ? s : { selectedId: id, styleState: 'normal' })),
+  setStyleState: (styleState) => set({ styleState }),
   hover: (id) => set({ hoveredId: id }),
   setBreakpoint: (breakpoint) => set({ breakpoint }),
   setPreview: (previewMode) => set({ previewMode }),

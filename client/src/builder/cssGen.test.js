@@ -56,3 +56,43 @@ describe('generateCss safety (user-controlled values must not escape the rule or
     expect(css).toContain('--brand: #4f46e5;');
   });
 });
+
+describe('hover / pressed states', () => {
+  const styles = { a: { base: { color: 'black' }, hover: { color: 'red', scale: '1.05' }, pressed: { scale: '0.97' } } };
+
+  it('puts hover inside @media (hover: hover) and pressed as :active after it', () => {
+    const css = generateCss(styles);
+    expect(css).toMatch(/@media \(hover: hover\) \{\s*\.s-a:hover \{ color: red; scale: 1\.05; \}\s*\}/);
+    expect(css).toContain('.s-a:active { scale: 0.97; }');
+    expect(css.indexOf(':active')).toBeGreaterThan(css.indexOf(':hover'));
+  });
+
+  it('animates exactly the properties that change, with a default timing', () => {
+    const css = generateCss(styles);
+    expect(css).toMatch(/\.s-a \{ color: black; transition-property: color, scale; transition-duration: 200ms; transition-timing-function: ease; \}/);
+  });
+
+  it('keeps an explicit timing and an explicit transition', () => {
+    const t = generateCss({ a: { base: { 'transition-duration': '400ms' }, hover: { opacity: '0.8' } } });
+    expect(t).toContain('transition-duration: 400ms;');
+    expect(t).not.toContain('200ms');
+    const full = generateCss({ a: { base: { transition: 'opacity 1s' }, hover: { opacity: '0.8' } } });
+    expect(full).not.toContain('transition-property');
+  });
+
+  it('adds no transition to elements without states', () => {
+    expect(generateCss({ a: { base: { color: 'red' } } })).not.toContain('transition');
+  });
+
+  it('editor preview also matches a forced data-ws-state attribute', () => {
+    const css = generateCss(styles, undefined, { preview: true });
+    expect(css).toContain('.s-a[data-ws-state~="hover"] { color: red; scale: 1.05; }');
+    expect(css).toContain('.s-a[data-ws-state~="pressed"] { scale: 0.97; }');
+    expect(generateCss(styles)).not.toContain('data-ws-state');
+  });
+
+  it('state values are sanitised like any other', () => {
+    const css = generateCss({ a: { hover: { color: 'red}</style><script>x</script>' } } });
+    expect(css).not.toMatch(/<\/style/i);
+  });
+});

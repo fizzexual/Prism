@@ -107,8 +107,21 @@ export default function DeviceFrame({ breakpoint, scale, isActive, overlayLayer 
   }, []);
 
   useEffect(() => {
-    if (wsStyleRef.current) wsStyleRef.current.textContent = generateCss(styles || {});
+    if (wsStyleRef.current) wsStyleRef.current.textContent = generateCss(styles || {}, undefined, { preview: true });
   }, [styles]);
+
+  // While the style panel edits Hover/Pressed, show that state on the selected element
+  // (matched by the [data-ws-state] preview rules) without needing the mouse over it.
+  const selectedForState = useUI((s) => s.selectedId);
+  const styleState = useUI((s) => s.styleState);
+  useEffect(() => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) return;
+    doc.querySelectorAll('[data-ws-state]').forEach((n) => n.removeAttribute('data-ws-state'));
+    if (previewMode || !selectedForState || styleState === 'normal') return;
+    const node = doc.querySelector(`[data-ws-id="${selectedForState}"]`);
+    if (node) node.setAttribute('data-ws-state', styleState === 'pressed' ? 'hover pressed' : 'hover');
+  });
 
   useEffect(() => {
     const editEl = iframeRef.current?.contentDocument?.getElementById('edit');

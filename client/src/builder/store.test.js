@@ -105,3 +105,13 @@ describe('canvas root + batched styles', () => {
     expect(P().styles[section].mobile).toMatchObject({ position: 'absolute', left: '10px' });
   });
 });
+
+describe('style state in the UI store', () => {
+  it('selecting another element goes back to Normal', async () => {
+    const { useUI } = await import('./store.js');
+    useUI.getState().setStyleState('hover');
+    expect(useUI.getState().styleState).toBe('hover');
+    useUI.getState().select('x');
+    expect(useUI.getState().styleState).toBe('normal');
+  });
+});

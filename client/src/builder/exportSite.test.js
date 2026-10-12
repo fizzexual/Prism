@@ -89,3 +89,15 @@ describe('pageFileNames', () => {
     expect(names[1]).toBe('about.html');
   });
 });
+
+describe('exportHtml with hover/pressed states', () => {
+  it('exports hover and pressed rules with the export class', () => {
+    const p = project({ b: { component: 'Button', props: { text: 'Go' }, children: [] } });
+    p.styles = { b: { base: { color: 'white' }, hover: { scale: '1.05' }, pressed: { scale: '0.97' } } };
+    const html = exportHtml(p);
+    expect(html).toContain('.c-b:hover { scale: 1.05; }');
+    expect(html).toContain('.c-b:active { scale: 0.97; }');
+    expect(html).toContain('transition-property: scale;');
+    expect(html).not.toContain('data-ws-state');
+  });
+});

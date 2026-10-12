@@ -12,6 +12,8 @@ import TransformSection from './panels/TransformSection.jsx';
 import AppearanceSection from './panels/AppearanceSection.jsx';
 import FiltersSection from './panels/FiltersSection.jsx';
 import AlignToolbar from './panels/AlignToolbar.jsx';
+import { StateSwitch, StateEffects } from './panels/StatesSection.jsx';
+import { stateEditKey } from './stateStyles.js';
 import { Section, Field, LengthField, PxField, SelectField, Segmented, ColorField, TextField, TextAreaField, ToggleField } from './controls.jsx';
 
 function fileToDataUrl(file) {
@@ -265,6 +267,7 @@ export default function StylePanel() {
   const editingComponentId = useUI((s) => s.editingComponentId);
   const breakpoint = useUI((s) => s.breakpoint);
   const activePageId = useUI((s) => s.activePageId);
+  const styleState = useUI((s) => s.styleState);
 
   if (!project) return null;
   if (!selectedId || !project.instances[selectedId]) {
@@ -274,10 +277,15 @@ export default function StylePanel() {
   const inst = project.instances[selectedId];
   if (inst.component === 'Instance') return <InstancePanel inst={inst} project={project} />;
   const perId = project.styles[selectedId] || {};
-  const eff = effectiveStyle(perId, breakpoint);
+  // In Hover/Pressed the panel shows normal + state values and writes to the state key.
+  const rootIdForState = getActivePage(project, activePageId).rootId;
+  const state = selectedId === rootIdForState ? 'normal' : styleState;
+  const inState = state !== 'normal';
+  const editKey = stateEditKey(breakpoint, state);
+  const eff = effectiveStyle(perId, breakpoint, state);
   const v = (prop) => eff[prop] ?? '';
-  const set = (prop, value) => useBuilder.getState().setStyle(selectedId, breakpoint, prop, value);
-  const setMany = (decls) => useBuilder.getState().setStyles(selectedId, breakpoint, decls);
+  const set = (prop, value) => useBuilder.getState().setStyle(selectedId, editKey, prop, value);
+  const setMany = (decls) => useBuilder.getState().setStyles(selectedId, editKey, decls);
   const ctx = parentContext(project, selectedId, breakpoint);
   const editingComp = editingComponentId ? project.components?.[editingComponentId] : null;
 
@@ -289,7 +297,9 @@ export default function StylePanel() {
       <div className="flex items-center justify-between border-b border-neutral-100 px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-neutral-800">{inst.label}</span>
-          {breakpoint !== 'base' && <span className="rounded-sm bg-amber-100 px-1.5 text-[10px] text-amber-700">{breakpoint}</span>}
+          {inState
+            ? <span className="rounded-sm bg-indigo-100 px-1.5 text-[10px] text-indigo-700">{state}</span>
+            : breakpoint !== 'base' && <span className="rounded-sm bg-amber-100 px-1.5 text-[10px] text-amber-700">{breakpoint}</span>}
         </div>
         <div className="flex gap-1">
           {!isRoot && (
@@ -315,18 +325,24 @@ export default function StylePanel() {
         </div>
       </div>
 
+      {!isRoot && <StateSwitch perId={perId} />}
       <div className="min-h-0 flex-1 overflow-y-auto scroll-thin">
-        {!isRoot && <AlignToolbar ctx={ctx} setMany={setMany} />}
-        {editingComp && <VariablesBindingSection inst={inst} comp={editingComp} eff={eff} />}
-        <ContentSection inst={inst} />
-        {isContainer(inst.component) && <LayoutSection eff={eff} set={set} setMany={setMany} />}
+        {inState && <StateEffects id={selectedId} perId={perId} state={state} />}
+        {!inState && (
+          <>
+            {!isRoot && <AlignToolbar ctx={ctx} setMany={setMany} />}
+            {editingComp && <VariablesBindingSection inst={inst} comp={editingComp} eff={eff} />}
+            <ContentSection inst={inst} />
+            {isContainer(inst.component) && <LayoutSection eff={eff} set={set} setMany={setMany} />}
 
-        <Section title="Spacing">
-          <FourSides label="Padding" prefix="padding" v={v} set={set} />
-          <FourSides label="Margin" prefix="margin" v={v} set={set} />
-        </Section>
+            <Section title="Spacing">
+              <FourSides label="Padding" prefix="padding" v={v} set={set} />
+              <FourSides label="Margin" prefix="margin" v={v} set={set} />
+            </Section>
 
-        <SizeSection eff={eff} ctx={ctx} set={set} setMany={setMany} />
+            <SizeSection eff={eff} ctx={ctx} set={set} setMany={setMany} />
+          </>
+        )}
 
         <Section title="Typography">
           <Field label="Color"><ColorField value={v('color')} onChange={(val) => set('color', val)} /></Field>
@@ -354,11 +370,11 @@ export default function StylePanel() {
 
         <TransformSection eff={eff} set={set} />
 
-        <AppearanceSection id={selectedId} eff={eff} set={set} />
+        <AppearanceSection id={selectedId} eff={eff} set={set} hideVisible={inState} />
 
         <FiltersSection eff={eff} set={set} />
 
-        {!isRoot && <PositionSection id={selectedId} eff={eff} set={set} />}
+        {!isRoot && !inState && <PositionSection id={selectedId} eff={eff} set={set} />}
       </div>
     </div>
   );
