@@ -79,28 +79,3 @@ export function googleFontsHref(families = []) {
     });
   return parts.length ? `https://fonts.googleapis.com/css2?${parts.join('&')}&display=swap` : null;
 }
-
-/** Curated family name stored in a font-family value ('' when none). */
-const familyOf = (value) => curatedFamily(value) || '';
-
-/**
- * setStylesBatch entries that set the site font: 'body' = every page root (text
- * inherits it), 'heading' = every Heading. '' clears back to the default. One undo step.
- */
-export function siteFontBatch(project, target, family) {
-  // Clearing the body font goes back to Body's default system stack (not the browser's serif).
-  const value = family ? fontStack(family) : target === 'body' ? FONT_OPTIONS[1].value : '';
-  const ids = target === 'body'
-    ? project.pages.map((p) => p.rootId)
-    : Object.values(project.instances).filter((i) => i.component === 'Heading').map((i) => i.id);
-  return ids.map((id) => ({ id, breakpoint: 'base', decls: { 'font-family': value } }));
-}
-
-/** The site's current body font (first page root) and heading font (if every heading agrees). */
-export function currentSiteFonts(project) {
-  const base = (id) => project.styles?.[id]?.base?.['font-family'];
-  const body = familyOf(base(project.pages[0]?.rootId));
-  const heads = Object.values(project.instances).filter((i) => i.component === 'Heading').map((i) => familyOf(base(i.id)));
-  const heading = heads.length && heads.every((h) => h === heads[0]) ? heads[0] : '';
-  return { body, heading };
-}
