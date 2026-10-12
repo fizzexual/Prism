@@ -31,6 +31,8 @@ Prism is a visual website builder that runs in the browser and can place Three.j
   presets (Lift, Grow, Glow, Dim, Press, Sink) and smooth transitions.
 - **Scroll animations** — 8 entrance presets, timing, stagger for card rows,
   previewed in the editor and working in the exported site (respects reduced motion).
+- **Google Fonts** — 16 curated typefaces per element or site-wide (headings /
+  body); only the fonts in use are loaded.
 - **Free positioning** — make any element absolute and move/resize it with handles,
   snapping and guides.
 - **Components** — turn any subtree into a reusable component; instances stay in sync,

@@ -9,6 +9,7 @@ import { handleShortcut } from './actions.js';
 import { InstanceRender } from './InstanceRender.jsx';
 import { motionCss } from './motion.js';
 import { playAll } from './canvasMotion.js';
+import { usedGoogleFonts, googleFontsHref } from './fonts.js';
 import Overlay from './Overlay.jsx';
 
 const RESET = `*,*::before,*::after{box-sizing:border-box}html,body{margin:0;padding:0}body{min-height:100%}img{max-width:100%}`;
@@ -100,10 +101,9 @@ export default function DeviceFrame({ breakpoint, scale, isActive, overlayLayer 
     if (!iframe) return undefined;
     const doc = iframe.contentDocument;
     doc.open();
-    doc.write('<!doctype html><html><head><meta charset="utf-8"><style id="reset"></style><style id="ws"></style><style id="edit"></style></head><body></body></html>');
+    doc.write('<!doctype html><html><head><meta charset="utf-8"><link id="gfonts" rel="stylesheet"><style id="reset"></style><style id="ws"></style><style id="edit"></style></head><body></body></html>');
     doc.close();
-    doc.getElementById('reset').textContent = `${RESET}
-${motionCss({ editor: true })}`;
+    doc.getElementById('reset').textContent = `${RESET}\n${motionCss({ editor: true })}`;
     wsStyleRef.current = doc.getElementById('ws');
     setMountNode(doc.body);
     return undefined;
@@ -111,6 +111,12 @@ ${motionCss({ editor: true })}`;
 
   useEffect(() => {
     if (wsStyleRef.current) wsStyleRef.current.textContent = generateCss(styles || {}, undefined, { preview: true });
+    // Load the Google Fonts the site uses (only touch the link when the set changes).
+    const link = iframeRef.current?.contentDocument?.getElementById('gfonts');
+    const href = googleFontsHref(usedGoogleFonts(styles || {}));
+    if (link && (link.getAttribute('href') || null) !== href) {
+      if (href) link.setAttribute('href', href); else link.removeAttribute('href');
+    }
   }, [styles]);
 
   // While the style panel edits Hover/Pressed, show that state on the selected element

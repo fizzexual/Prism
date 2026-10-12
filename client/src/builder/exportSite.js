@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { COMPONENTS, ICON_SET, tagFor } from './components.jsx';
 import { generateCss } from './cssGen.js';
 import { normalizeMotion, motionAttrs, motionCss, MOTION_RUNTIME } from './motion.js';
+import { usedGoogleFonts, googleFontsHref } from './fonts.js';
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const escAttr = (s) => esc(s).replace(/"/g, '&quot;');
@@ -165,6 +166,16 @@ export function pageFileNames(pages) {
   });
 }
 
+/** <link> tags for the curated Google Fonts the site uses (empty when none). */
+function fontLinks(styles) {
+  const href = googleFontsHref(usedGoogleFonts(styles));
+  if (!href) return '';
+  return `  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="${escAttr(href)}" />
+`;
+}
+
 /** Build a self-contained HTML document (CSS inlined) for one page. */
 export function exportHtmlForPage(project, page) {
   const body = renderNode(project.instances, page.rootId, '    ', project.components || {});
@@ -175,7 +186,7 @@ export function exportHtmlForPage(project, page) {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${esc(project.name)} — ${esc(page.name)}</title>
-  <style>
+${fontLinks(project.styles)}  <style>
 ${css}
   </style>
 ${body.includes(' data-motion=') ? `  <style>\n${motionCss()}\n  </style>\n  <script>${MOTION_RUNTIME}</script>\n` : ''}</head>

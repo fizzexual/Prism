@@ -15,6 +15,7 @@ import AlignToolbar from './panels/AlignToolbar.jsx';
 import { StateSwitch, StateEffects } from './panels/StatesSection.jsx';
 import { stateEditKey } from './stateStyles.js';
 import AnimationSection from './panels/AnimationSection.jsx';
+import { FONT_OPTIONS, GOOGLE_FONTS, siteFontBatch, currentSiteFonts } from './fonts.js';
 import { Section, Field, LengthField, PxField, SelectField, Segmented, ColorField, TextField, TextAreaField, ToggleField } from './controls.jsx';
 
 function fileToDataUrl(file) {
@@ -104,12 +105,8 @@ function ContentSection({ inst }) {
   return null;
 }
 
-const FONT_FAMILIES = [
-  { value: '', label: 'Default' },
-  { value: 'system-ui, -apple-system, "Segoe UI", sans-serif', label: 'Sans' },
-  { value: 'ui-serif, Georgia, "Times New Roman", serif', label: 'Serif' },
-  { value: 'ui-monospace, Menlo, Consolas, monospace', label: 'Mono' },
-];
+// System stacks (same values as before, so existing projects still show their choice) + curated Google Fonts.
+const FONT_FAMILIES = FONT_OPTIONS;
 const WEIGHTS = ['', '300', '400', '500', '600', '700', '800'];
 
 function FourSides({ label, prefix, v, set }) {
@@ -125,6 +122,23 @@ function FourSides({ label, prefix, v, set }) {
             <span className="text-[9px] text-neutral-300">{initials[s]}</span>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+const SITE_FONT_OPTIONS = [{ value: '', label: 'Default' }, ...GOOGLE_FONTS.map((f) => ({ value: f.family, label: f.family }))];
+
+/** One dropdown each for the whole site's body text and headings (one undo step per change). */
+function SiteFonts({ project }) {
+  const cur = currentSiteFonts(project);
+  const apply = (target, family) => useBuilder.getState().setStylesBatch(siteFontBatch(project, target, family));
+  return (
+    <div className="mt-5">
+      <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">Site fonts</div>
+      <div className="flex flex-col gap-2">
+        <Field label="Headings"><SelectField value={cur.heading} onChange={(v) => apply('heading', v)} options={SITE_FONT_OPTIONS} /></Field>
+        <Field label="Body"><SelectField value={cur.body} onChange={(v) => apply('body', v)} options={SITE_FONT_OPTIONS} /></Field>
       </div>
     </div>
   );
@@ -161,6 +175,7 @@ function ThemePanel({ project }) {
           +
         </button>
       </div>
+      <SiteFonts project={project} />
       <p className="mt-5 text-center text-[11px] leading-relaxed text-neutral-400">
         Select an element on the canvas to edit it. These colors appear as swatches in every color picker.
       </p>

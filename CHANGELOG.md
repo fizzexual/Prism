@@ -25,6 +25,10 @@ below are grouped by date and built from the git history.
   animated. Exported pages reveal elements as they scroll into view with a
   tiny built-in script; content is never left hidden, and visitors who prefer
   reduced motion see no animation.
+- Google Fonts. 16 curated fonts (Inter, Manrope, Poppins, Space Grotesk,
+  Syne, Playfair Display, Fraunces, JetBrains Mono and more) in the Font
+  dropdown, plus site-wide Heading and Body fonts in the Theme panel. Only the
+  fonts a site uses are loaded, in the editor and in the exported page.
 
 ## 2026-06-22
 
