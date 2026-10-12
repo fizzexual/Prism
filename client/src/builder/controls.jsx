@@ -3,6 +3,7 @@ import { ChevronDown } from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
 import { parseLength } from './styleUtils.js';
 import { useBuilder } from './store.js';
+import { THEME_COLORS, themeVar, normalizeTheme, resolveThemeValue } from './theme.js';
 
 const inputCls =
   'w-full rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-800 outline-hidden focus:border-indigo-400';
@@ -246,7 +247,10 @@ export function ToggleField({ label, checked, onChange }) {
 export function ColorField({ value, onChange }) {
   const [open, setOpen] = useState(false);
   const swatches = useBuilder((s) => s.project?.tokens?.colors) || [];
+  const theme = useBuilder((s) => s.project?.theme);
   const color = value || '';
+  // A theme link (var(--pm-primary)) is shown as the colour it currently resolves to.
+  const shown = resolveThemeValue(color, theme);
   return (
     <div className="relative flex items-center gap-1.5">
       <button
@@ -254,7 +258,7 @@ export function ColorField({ value, onChange }) {
         onClick={() => setOpen((o) => !o)}
         className="h-6 w-6 shrink-0 rounded-sm border border-neutral-300"
         style={{
-          background: color || 'repeating-conic-gradient(#ddd 0% 25%, #fff 0% 50%) 50% / 8px 8px',
+          background: shown || 'repeating-conic-gradient(#ddd 0% 25%, #fff 0% 50%) 50% / 8px 8px',
         }}
         title="Pick color"
       />
@@ -268,7 +272,20 @@ export function ColorField({ value, onChange }) {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-8 z-50 rounded-lg bg-white p-2 shadow-xl ring-1 ring-black/10">
-            <HexColorPicker color={color || '#000000'} onChange={onChange} />
+            <HexColorPicker color={/^#/.test(shown) ? shown : '#000000'} onChange={onChange} />
+            <div className="mt-2 flex w-[200px] flex-wrap gap-1" aria-label="Theme colors">
+              {THEME_COLORS.map(({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  aria-label={`Theme ${label}`}
+                  title={`${label} (follows the theme)`}
+                  onClick={() => onChange(themeVar(key))}
+                  style={{ background: normalizeTheme(theme).colors[key] }}
+                  className={`h-5 w-5 rounded-full border border-neutral-300 ${color === themeVar(key) ? 'ring-2 ring-indigo-500 ring-offset-1' : ''}`}
+                />
+              ))}
+            </div>
             {swatches.length > 0 && (
               <div className="mt-2 flex w-[200px] flex-wrap gap-1">
                 {swatches.map((c) => (
