@@ -118,3 +118,15 @@ describe('mountScene (rebuilt from source, as in the export)', () => {
     expect(el.querySelector('canvas')).toBeNull();
   });
 });
+
+describe('glbDataUrl (uploaded model files)', async () => {
+  const { glbDataUrl } = await import('./scene3d.js');
+  it('normalises any data URL whose bytes are a GLB to model/gltf-binary', () => {
+    expect(glbDataUrl('data:application/octet-stream;base64,Z2xURgIAAAA=')).toBe('data:model/gltf-binary;base64,Z2xURgIAAAA=');
+    expect(glbDataUrl('data:;base64,Z2xURgIAAAA=')).toBe('data:model/gltf-binary;base64,Z2xURgIAAAA=');
+  });
+  it('rejects files that are not GLB, whatever their name or type', () => {
+    expect(glbDataUrl('data:model/gltf-binary;base64,PGh0bWw+')).toBeNull(); // "<html>"
+    expect(glbDataUrl('not a data url')).toBeNull();
+  });
+});

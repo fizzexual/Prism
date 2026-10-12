@@ -228,3 +228,14 @@ export function mountScene(THREE, addons, el, cfg) {
     },
   };
 }
+
+/**
+ * Turn a FileReader data URL into a GLB data URL the engine accepts — only if the
+ * bytes really are a GLB (magic "glTF" = base64 "Z2xURg"); browsers often report no
+ * MIME type for .glb, so the content decides, not the name.
+ */
+export function glbDataUrl(dataUrl) {
+  const m = /^data:[^,]*;base64,(.*)$/s.exec(String(dataUrl || ''));
+  if (!m || !m[1].startsWith('Z2xURg')) return null;
+  return `data:model/gltf-binary;base64,${m[1]}`;
+}
