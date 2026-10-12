@@ -130,8 +130,11 @@ export function defaultProject(name = 'My Site') {
 
   const styles = {
     [body.id]: { base: { ...COMPONENTS.Body.defaultStyle } },
-    [section.id]: { base: { ...COMPONENTS.Section.defaultStyle, 'padding-top': '72px', 'padding-bottom': '72px', gap: '20px' } },
-    [heading.id]: { base: { ...COMPONENTS.Heading.defaultStyle, 'font-size': '48px' } },
+    [section.id]: {
+      base: { ...COMPONENTS.Section.defaultStyle, 'padding-top': '72px', 'padding-bottom': '72px', gap: '20px' },
+      mobile: { 'padding-top': '56px', 'padding-bottom': '56px', 'padding-left': '20px', 'padding-right': '20px' },
+    },
+    [heading.id]: { base: { ...COMPONENTS.Heading.defaultStyle, 'font-size': '48px' }, mobile: { 'font-size': '34px' } },
     [text.id]: { base: { ...COMPONENTS.Text.defaultStyle, 'font-size': '18px', 'max-width': '560px', color: '#4b5563' } },
     [button.id]: { base: { ...COMPONENTS.Button.defaultStyle, 'align-self': 'flex-start' } },
   };

@@ -139,3 +139,13 @@ describe('new elements follow the site theme', async () => {
     expect(COMPONENTS.Button.defaultStyle).toMatchObject({ 'background-color': 'var(--pm-primary)', 'border-radius': 'var(--pm-radius)' });
   });
 });
+
+describe('the starter section of a new project is phone-ready too', () => {
+  it('tightens padding and scales the heading on phones', () => {
+    const p = defaultProject();
+    const section = p.instances[p.pages[0].rootId].children[0];
+    const heading = p.instances[section].children[0];
+    expect(parseInt(p.styles[section].mobile['padding-left'], 10)).toBeLessThanOrEqual(24);
+    expect(parseInt(p.styles[heading].mobile['font-size'], 10)).toBeLessThanOrEqual(36);
+  });
+});
