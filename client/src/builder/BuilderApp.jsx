@@ -17,15 +17,7 @@ import { useAutosave } from './useAutosave.js';
 import { getLastId, loadLocal, getServerId, normalizeProject } from './persist.js';
 import { handleShortcut } from './actions.js';
 import ContextMenu from './ContextMenu.jsx';
-import { TEMPLATES, templateInsertIndex } from './templates.js';
-
-function addTemplate(tpl) {
-  const { project } = useBuilder.getState();
-  const rootId = getActivePage(project, useUI.getState().activePageId).rootId;
-  const index = templateInsertIndex(project, rootId, useUI.getState().selectedId, tpl);
-  const id = useBuilder.getState().pasteSnapshot(rootId, index, tpl.build());
-  if (id) useUI.getState().select(id);
-}
+import SectionLibrary from './panels/SectionLibrary.jsx';
 
 const BP_ICONS = { base: Monitor, tablet: Tablet, mobile: Smartphone };
 
@@ -142,20 +134,7 @@ export default function BuilderApp() {
             </div>
             {leftTab === 'add' && (
               <div className="min-h-0 flex-1 overflow-y-auto scroll-thin">
-                <div className="border-b border-neutral-100 p-2">
-                  <div className="px-1 pb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">Sections</div>
-                  <div className="flex flex-col gap-1">
-                    {TEMPLATES.map((t) => (
-                      <button
-                        key={t.label}
-                        onClick={() => addTemplate(t)}
-                        className="rounded-md border border-neutral-200 px-2 py-1.5 text-left text-xs text-neutral-700 hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700"
-                      >
-                        {t.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <SectionLibrary />
                 <div className="p-2">
                   <div className="px-1 pb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">Insert</div>
                   <div className="grid grid-cols-2 gap-1.5">

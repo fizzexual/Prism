@@ -18,8 +18,10 @@ Prism is a visual website builder that runs in the browser and can place Three.j
 - **Real HTML/CSS canvas** — the page renders in an iframe with real CSS layout.
   Insert elements from the Add panel, drag to reorder, double-click text to edit it
   in place.
-- **Section templates** — Navbar, Hero, Features, Call to action and Footer, each
-  responsive out of the box (columns stack and type scales down on phones).
+- **Section library** — 17 sections (navbars, heroes, features, bento grid, stats,
+  gallery, team, logos, testimonials, pricing, FAQ, contact, newsletter, CTA,
+  footers), each phone-ready, theme-linked and animated, plus one-click starter
+  pages (Landing page, Portfolio, Startup).
 - **Elements** — Section, Columns, Grid, Box, Card, Heading (h1–h6), Text, Quote,
   Link, Button, Image, Icon, Input, Textarea, Divider, Spacer and **3D Object**.
 - **Framer-style style panel** — size modes (Fill/Fit/Fixed/Relative), Stack/Grid/Block

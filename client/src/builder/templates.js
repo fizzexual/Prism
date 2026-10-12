@@ -1,5 +1,7 @@
 import { createInstance, findParentId } from './model.js';
 import { COMPONENTS } from './components.jsx';
+import { pad, rise } from './sectionKit.js';
+import { LIBRARY } from './sectionLibrary.js';
 
 /**
  * Build a paste-snapshot from a nested spec
@@ -29,10 +31,6 @@ function build(spec) {
   return { rootId, instances, styles };
 }
 
-// Entrance animations the templates ship with (see motion.js).
-const rise = (delay = 0) => ({ preset: 'fade-up', duration: 800, delay, easing: 'smooth' });
-
-const pad = (y, x) => ({ 'padding-top': y, 'padding-bottom': y, 'padding-left': x, 'padding-right': x });
 
 const card = (title, body) => ({
   component: 'Card',
@@ -47,6 +45,7 @@ const card = (title, body) => ({
 const SPECS = {
   Navbar: {
     label: 'Navbar',
+    category: 'Navigation',
     place: 'top',
     component: 'Section',
     style: { 'flex-direction': 'row', 'align-items': 'center', 'justify-content': 'space-between', ...pad('18px', '40px'), 'background-color': 'var(--pm-surface)', 'border-bottom-width': '1px', 'border-bottom-style': 'solid', 'border-color': '#e5e7eb' },
@@ -58,6 +57,7 @@ const SPECS = {
   },
   Hero: {
     label: 'Hero',
+    category: 'Hero',
     component: 'Section',
     style: { ...pad('96px', '64px'), gap: '20px', 'align-items': 'center', 'background-color': 'var(--pm-dark)' },
     tablet: pad('80px', '40px'),
@@ -70,6 +70,7 @@ const SPECS = {
   },
   Features: {
     label: 'Features',
+    category: 'Content',
     component: 'Section',
     style: { ...pad('80px', '64px'), gap: '40px', 'align-items': 'center' },
     tablet: pad('64px', '32px'),
@@ -87,6 +88,7 @@ const SPECS = {
   },
   CTA: {
     label: 'Call to action',
+    category: 'Call to action',
     component: 'Section',
     style: { ...pad('72px', '64px'), 'align-items': 'center', gap: '16px', 'background-color': 'var(--pm-primary)' },
     mobile: pad('56px', '20px'),
@@ -97,6 +99,7 @@ const SPECS = {
   },
   Footer: {
     label: 'Footer',
+    category: 'Footer',
     place: 'bottom',
     component: 'Section',
     style: { ...pad('48px', '64px'), 'background-color': 'var(--pm-dark)', gap: '8px', 'align-items': 'center' },
@@ -105,7 +108,27 @@ const SPECS = {
   },
 };
 
-export const TEMPLATES = Object.values(SPECS).map((spec) => ({ label: spec.label, place: spec.place || 'after', build: () => build(spec) }));
+/** Add-panel groups, in display order. */
+export const CATEGORIES = ['Navigation', 'Hero', 'Content', 'Social proof', 'Pricing', 'Help', 'Call to action', 'Footer'];
+
+export const TEMPLATES = [...Object.values(SPECS), ...LIBRARY].map((spec) => ({
+  label: spec.label,
+  category: spec.category,
+  place: spec.place || 'after',
+  build: () => build(spec),
+}));
+
+/** Whole pages assembled from sections (added as a new page — never replaces one). */
+export const STARTERS = [
+  { label: 'Landing page', sections: ['Navbar', 'Hero (split)', 'Logo cloud', 'Features', 'Stats', 'Testimonials', 'Pricing', 'FAQ', 'Call to action', 'Footer (columns)'] },
+  { label: 'Portfolio', sections: ['Navbar', 'Hero', 'Gallery', 'Testimonials', 'Contact', 'Footer'] },
+  { label: 'Startup', sections: ['Navbar', 'Hero', 'Bento grid', 'Team', 'Pricing', 'Newsletter', 'Footer (columns)'] },
+];
+
+/** Fresh snapshots for every section of a starter page, in order. */
+export function buildStarter(starter) {
+  return starter.sections.map((label) => TEMPLATES.find((t) => t.label === label).build());
+}
 
 /**
  * Where a section template lands in the page root: Navbar at the top, Footer at the
