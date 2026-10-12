@@ -20,7 +20,26 @@ describe('exportHtml with 3D objects', () => {
     const m = html.match(/data-prism-3d="([^"]*)"/);
     expect(m).not.toBeNull();
     const config = JSON.parse(m[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&'));
-    expect(config).toMatchObject({ shape: 'torus', color: '#ff0000', autoRotate: false, metalness: 0.2, roughness: 0.6, wireframe: true });
+    // Old props are written as the validated, current config (autoRotate:false -> still, wireframe -> wire).
+    expect(config).toMatchObject({ shape: 'torus', color: '#ff0000', motion: 'still', material: 'wire', metalness: 0.2, roughness: 0.6 });
+  });
+
+  it('inlines the same scene engine the editor uses, with the studio environment and model loader', () => {
+    const html = exportHtml(project({ cube: { component: '3D', props: { material: 'glass', motion: 'mouse' }, children: [] } }));
+    expect(html).toContain('const mountScene = ');
+    expect(html).toContain('RoomEnvironment');
+    expect(html).toContain('GLTFLoader');
+    expect(html).toContain('MeshPhysicalMaterial'); // engine source, not a copy
+    const script = html.match(/<script type="module">([\s\S]*?)<\/script>/)[1];
+    const body = script.replace(/^\s*import[^\n]*\n/gm, ''); // imports can't run in a Function body
+    expect(() => new Function('THREE', 'OrbitControls', 'RoomEnvironment', 'GLTFLoader', body)).not.toThrow();
+  });
+
+  it('writes an uploaded model into the config, and drops unsafe model URLs', () => {
+    const ok = exportHtml(project({ m: { component: '3D', props: { shape: 'model', modelSrc: 'data:model/gltf-binary;base64,Z2xURg==' }, children: [] } }));
+    expect(ok).toContain('Z2xURg==');
+    const bad = exportHtml(project({ m: { component: '3D', props: { shape: 'model', modelSrc: 'javascript:alert(1)' }, children: [] } }));
+    expect(bad).not.toContain('javascript:');
   });
 
   it('adds a Three.js renderer (same version as the editor) when the page has a 3D object', () => {
