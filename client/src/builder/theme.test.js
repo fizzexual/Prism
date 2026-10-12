@@ -66,3 +66,17 @@ describe('applyThemeBatch', () => {
     expect(JSON.stringify(batch)).not.toContain('"color":"var(--pm-surface)"');
   });
 });
+
+describe('applyThemeBatch links corner radii', () => {
+  it('a border-radius equal to the current theme radius follows the theme from now on', () => {
+    const project = {
+      theme: { ...DEFAULT_THEME, radius: 10 },
+      pages: [],
+      instances: {},
+      styles: { b: { base: { 'border-radius': '10px' } }, c: { base: { 'border-radius': '999px' } } },
+    };
+    const batch = applyThemeBatch(project);
+    expect(batch).toContainEqual({ id: 'b', breakpoint: 'base', decls: { 'border-radius': 'var(--pm-radius)' } });
+    expect(batch.find((e) => e.id === 'c')).toBeUndefined(); // pills stay pills
+  });
+});

@@ -96,6 +96,7 @@ export function applyThemeBatch(project) {
       for (const [prop, val] of Object.entries(decls || {})) {
         const key = typeof val === 'string' ? byHex[val.trim().toLowerCase()] : null;
         if (key) put(id, bp, { [prop]: themeVar(key) });
+        else if (prop === 'border-radius' && val === `${t.radius}px`) put(id, bp, { [prop]: 'var(--pm-radius)' });
       }
     }
   }
