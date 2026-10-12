@@ -14,6 +14,7 @@ import FiltersSection from './panels/FiltersSection.jsx';
 import AlignToolbar from './panels/AlignToolbar.jsx';
 import { StateSwitch, StateEffects } from './panels/StatesSection.jsx';
 import { stateEditKey } from './stateStyles.js';
+import AnimationSection from './panels/AnimationSection.jsx';
 import { Section, Field, LengthField, PxField, SelectField, Segmented, ColorField, TextField, TextAreaField, ToggleField } from './controls.jsx';
 
 function fileToDataUrl(file) {
@@ -189,6 +190,7 @@ function InstancePanel({ inst, project }) {
         <div className="p-3">
           <button onClick={() => comp && useUI.getState().setEditingComponent(comp.id)} className="w-full rounded-md bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-700">Edit Component</button>
         </div>
+        <AnimationSection inst={inst} container={false} />
         {variables.length > 0 ? (
           <Section title="Properties">
             {variables.map((v) => (
@@ -333,6 +335,7 @@ export default function StylePanel() {
             {!isRoot && <AlignToolbar ctx={ctx} setMany={setMany} />}
             {editingComp && <VariablesBindingSection inst={inst} comp={editingComp} eff={eff} />}
             <ContentSection inst={inst} />
+            {!isRoot && <AnimationSection inst={inst} container={isContainer(inst.component)} />}
             {isContainer(inst.component) && <LayoutSection eff={eff} set={set} setMany={setMany} />}
 
             <Section title="Spacing">
