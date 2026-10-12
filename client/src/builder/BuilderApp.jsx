@@ -18,11 +18,13 @@ import { useAutosave } from './useAutosave.js';
 import { getLastId, loadLocal, getServerId, isValidProject } from './persist.js';
 import { handleShortcut } from './actions.js';
 import ContextMenu from './ContextMenu.jsx';
-import { TEMPLATES } from './templates.js';
+import { TEMPLATES, templateInsertIndex } from './templates.js';
 
 function addTemplate(tpl) {
-  const rootId = getActivePage(useBuilder.getState().project, useUI.getState().activePageId).rootId;
-  const id = useBuilder.getState().pasteSnapshot(rootId, undefined, tpl.build());
+  const { project } = useBuilder.getState();
+  const rootId = getActivePage(project, useUI.getState().activePageId).rootId;
+  const index = templateInsertIndex(project, rootId, useUI.getState().selectedId, tpl);
+  const id = useBuilder.getState().pasteSnapshot(rootId, index, tpl.build());
   if (id) useUI.getState().select(id);
 }
 

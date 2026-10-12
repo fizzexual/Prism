@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { COMPONENTS, ICON_SET } from './components.jsx';
+import { COMPONENTS, ICON_SET, tagFor } from './components.jsx';
 import { generateCss } from './cssGen.js';
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -128,7 +128,8 @@ function renderNode(instances, id, indent, components = {}, resolve = null, open
   }
   const attrs = inst.component === 'Link' ? ` href="${escAttr(safeHref(inst.props.href))}"` : '';
   const text = boundText != null ? boundText : (inst.props.text || '');
-  return `${indent}<${def.tag} class="${c}"${styleAttr}${attrs}>${esc(text)}</${def.tag}>`;
+  const tag = tagFor(inst);
+  return `${indent}<${tag} class="${c}"${styleAttr}${attrs}>${esc(text)}</${tag}>`;
 }
 
 const slugify = (s) => String(s || 'site').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'site';

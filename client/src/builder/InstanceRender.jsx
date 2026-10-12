@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { COMPONENTS, ICON_SET } from './components.jsx';
+import { COMPONENTS, ICON_SET, tagFor } from './components.jsx';
 
 // Lazy so three.js only loads when a 3D element is present.
 const ThreeBox = lazy(() => import('./ThreeBox.jsx'));
@@ -48,7 +48,7 @@ export function InstanceRender({ id, instances, components = {}, selOverride = n
 
   const def = COMPONENTS[inst.component];
   if (!def) return null;
-  const Tag = def.tag;
+  const Tag = tagFor(inst);
   const dwid = selOverride || id;
 
   let boundText = null;

@@ -119,7 +119,7 @@ export const COMPONENTS = {
     tag: 'h2',
     container: false,
     icon: HeadingIcon,
-    defaultProps: { text: 'Heading' },
+    defaultProps: { text: 'Heading', level: 'h2' },
     defaultStyle: { 'font-size': '32px', 'font-weight': '700', 'margin-top': '0px', 'margin-bottom': '0px', color: '#111827' },
   },
   Text: {
@@ -253,3 +253,13 @@ export const COMPONENT_LIST = [
 ];
 
 export const isContainer = (component) => !!COMPONENTS[component]?.container;
+
+const HEADING_LEVELS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+export { HEADING_LEVELS };
+
+/** The HTML tag an instance renders as (a Heading's level picks h1–h6). */
+export function tagFor(inst) {
+  const def = COMPONENTS[inst.component];
+  if (inst.component === 'Heading' && HEADING_LEVELS.includes(inst.props?.level)) return inst.props.level;
+  return def?.tag;
+}
