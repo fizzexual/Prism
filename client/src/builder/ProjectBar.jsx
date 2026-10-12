@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ChevronDown, Plus, Trash2, Cloud, CloudOff, Loader2, FolderOpen, AlertTriangle } from 'lucide-react';
 import { useBuilder, useUI } from './store.js';
 import { defaultProject } from './model.js';
-import { listAll, deleteProject, loadLocal, getServerId, isValidProject } from './persist.js';
+import { listAll, deleteProject, loadLocal, getServerId, normalizeProject } from './persist.js';
 import { api } from '../lib/api.js';
 
 const STATUS = {
@@ -53,12 +53,13 @@ export default function ProjectBar() {
     if (entry.serverId) {
       try {
         const row = await api.getProject(entry.serverId);
-        if (isValidProject(row.document)) { proj = row.document; sid = row.id; }
+        proj = normalizeProject(row.document);
+        if (proj) sid = row.id;
       } catch { /* fall back to local */ }
     }
     if (!proj) {
-      const lp = loadLocal(entry.id);
-      if (isValidProject(lp)) { proj = lp; sid = getServerId(entry.id); }
+      proj = normalizeProject(loadLocal(entry.id));
+      if (proj) sid = getServerId(entry.id);
     }
     if (proj) loadInto(proj, sid);
     setOpen(false);

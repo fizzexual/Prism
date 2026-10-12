@@ -30,3 +30,29 @@ describe('syncSave', () => {
     expect(res.status).toBe('error');
   });
 });
+
+describe('normalizeProject (repair old or damaged saves instead of crashing on every load)', () => {
+  it('fills in missing styles, props, children and components', async () => {
+    const { normalizeProject, isValidProject } = await import('./persist.js');
+    const broken = {
+      id: 'p', name: 'Old',
+      pages: [{ id: 'pg', name: 'Home', rootId: 'r' }],
+      instances: { r: { id: 'r', component: 'Body', children: ['a', 'ghost'] }, a: { id: 'a', component: 'Text' } },
+    };
+    const fixed = normalizeProject(broken);
+    expect(isValidProject(fixed)).toBe(true);
+    expect(fixed.styles).toEqual({});
+    expect(fixed.components).toEqual({});
+    expect(fixed.instances.a).toMatchObject({ children: [], props: {} });
+    expect(fixed.instances.r.children).toEqual(['a']); // dangling child id dropped
+    expect(fixed.tokens.colors.length).toBeGreaterThan(0);
+    expect(fixed.assets).toEqual([]);
+  });
+
+  it('returns null for things that are not projects at all', async () => {
+    const { normalizeProject } = await import('./persist.js');
+    expect(normalizeProject(null)).toBeNull();
+    expect(normalizeProject({ pages: [] })).toBeNull();
+    expect(normalizeProject('x')).toBeNull();
+  });
+});

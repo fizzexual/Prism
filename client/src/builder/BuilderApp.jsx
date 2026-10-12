@@ -14,7 +14,7 @@ import ComponentsPanel from './ComponentsPanel.jsx';
 import ProjectBar from './ProjectBar.jsx';
 import PagesMenu from './PagesMenu.jsx';
 import { useAutosave } from './useAutosave.js';
-import { getLastId, loadLocal, getServerId, isValidProject } from './persist.js';
+import { getLastId, loadLocal, getServerId, normalizeProject } from './persist.js';
 import { handleShortcut } from './actions.js';
 import ContextMenu from './ContextMenu.jsx';
 import { TEMPLATES, templateInsertIndex } from './templates.js';
@@ -69,10 +69,10 @@ export default function BuilderApp() {
   useEffect(() => {
     if (project) return;
     const lastId = getLastId();
-    const restored = lastId ? loadLocal(lastId) : null;
-    const doc = restored && isValidProject(restored) ? restored : defaultProject();
+    const restored = lastId ? normalizeProject(loadLocal(lastId)) : null;
+    const doc = restored || defaultProject();
     useBuilder.getState().loadProject(doc);
-    if (restored && isValidProject(restored)) useUI.getState().setServerId(getServerId(lastId));
+    if (restored) useUI.getState().setServerId(getServerId(lastId));
     useUI.getState().setActivePage(doc.pages[0].id);
   }, [project]);
 

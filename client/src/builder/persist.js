@@ -59,6 +59,34 @@ export function deleteLocal(id) {
   if (localStorage.getItem(LAST) === id) localStorage.removeItem(LAST);
 }
 
+const DEFAULT_COLORS = ['#4f46e5', '#7c3aed', '#ec4899', '#111827', '#6b7280', '#10b981', '#f59e0b', '#ffffff'];
+const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+/**
+ * Repair an old or damaged saved project so the editor can open it: fill in missing
+ * maps/arrays and drop child ids that point nowhere. Returns null if it isn't a project.
+ */
+export function normalizeProject(p) {
+  if (!isObj(p) || !isObj(p.instances) || !Array.isArray(p.pages)) return null;
+  const instances = {};
+  for (const [id, inst] of Object.entries(p.instances)) {
+    if (!isObj(inst) || typeof inst.component !== 'string') continue;
+    instances[id] = { ...inst, id, props: isObj(inst.props) ? inst.props : {}, children: Array.isArray(inst.children) ? inst.children : [] };
+  }
+  for (const inst of Object.values(instances)) inst.children = inst.children.filter((c) => instances[c]);
+  const pages = p.pages.filter((pg) => isObj(pg) && instances[pg.rootId]);
+  if (!pages.length) return null;
+  return {
+    ...p,
+    pages,
+    instances,
+    styles: isObj(p.styles) ? p.styles : {},
+    components: isObj(p.components) ? p.components : {},
+    tokens: isObj(p.tokens) && Array.isArray(p.tokens.colors) ? p.tokens : { colors: [...DEFAULT_COLORS] },
+    assets: Array.isArray(p.assets) ? p.assets : [],
+  };
+}
+
 /** Validate a loaded object is a real builder project (guards against stale shapes). */
 export function isValidProject(p) {
   return Boolean(p && p.instances && Array.isArray(p.pages) && p.pages[0]?.rootId && p.instances[p.pages[0].rootId]);
