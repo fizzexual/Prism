@@ -7,6 +7,8 @@ import { findParentId, getActivePage } from './model.js';
 import { effectiveStyle } from './styleUtils.js';
 import { handleShortcut } from './actions.js';
 import { InstanceRender } from './InstanceRender.jsx';
+import { motionCss } from './motion.js';
+import { playAll } from './canvasMotion.js';
 import Overlay from './Overlay.jsx';
 
 const RESET = `*,*::before,*::after{box-sizing:border-box}html,body{margin:0;padding:0}body{min-height:100%}img{max-width:100%}`;
@@ -100,7 +102,8 @@ export default function DeviceFrame({ breakpoint, scale, isActive, overlayLayer 
     doc.open();
     doc.write('<!doctype html><html><head><meta charset="utf-8"><style id="reset"></style><style id="ws"></style><style id="edit"></style></head><body></body></html>');
     doc.close();
-    doc.getElementById('reset').textContent = RESET;
+    doc.getElementById('reset').textContent = `${RESET}
+${motionCss({ editor: true })}`;
     wsStyleRef.current = doc.getElementById('ws');
     setMountNode(doc.body);
     return undefined;
@@ -122,6 +125,13 @@ export default function DeviceFrame({ breakpoint, scale, isActive, overlayLayer 
     const node = doc.querySelector(`[data-ws-id="${selectedForState}"]`);
     if (node) node.setAttribute('data-ws-state', styleState === 'pressed' ? 'hover pressed' : 'hover');
   });
+
+  // Entering Preview plays every entrance animation once.
+  useEffect(() => {
+    if (!previewMode || !mountNode) return undefined;
+    const t = setTimeout(() => playAll(iframeRef.current?.contentDocument, useBuilder.getState().project), 60);
+    return () => clearTimeout(t);
+  }, [previewMode, mountNode]);
 
   useEffect(() => {
     const editEl = iframeRef.current?.contentDocument?.getElementById('edit');
