@@ -187,6 +187,14 @@ export function exportHtml(project) {
   return exportHtmlForPage(project, project.pages[0]);
 }
 
+/** Download the publishable site as a ZIP (every page + sitemap.xml + robots.txt), ready to upload to any host. */
+export async function downloadSite(project) {
+  const JSZip = (await import('jszip')).default;
+  const zip = new JSZip();
+  for (const f of buildSiteFiles(project)) zip.file(f.name, f.content);
+  triggerDownload(await zip.generateAsync({ type: 'blob' }), `${slugify(project.name)}-site.zip`);
+}
+
 /** Every file of the publishable site: one HTML per page, sitemap.xml (with a site address) and robots.txt. */
 export function buildSiteFiles(project) {
   const files = pageFileNames(project.pages);
