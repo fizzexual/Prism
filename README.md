@@ -50,6 +50,10 @@ Prism is a visual website builder that runs in the browser and can place Three.j
 - **Persistence** — autosave to localStorage (flushed when the tab is hidden or
   closed, so the last edit is never lost) and to PostgreSQL when the API has a
   database.
+- **Publishing** — per-page SEO and social tags (title, description, share image,
+  noindex) with a search-result preview, links between pages (also on buttons),
+  favicon and language, and a Publish dialog that downloads a ready-to-host ZIP
+  with sitemap.xml and robots.txt plus hosting steps.
 - **Code export** — one self-contained HTML file per page (a ZIP for multi-page
   sites) with responsive media queries.
 

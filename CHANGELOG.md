@@ -45,6 +45,11 @@ below are grouped by date and built from the git history.
   with the theme, and make it Follow the mouse, Rotate on scroll, Float or
   Drag & spin. 3D pauses off-screen, respects reduced motion and frees its GPU
   context. New Hero (3D) section.
+- Publishing. Each page has search & sharing settings (title, description,
+  share image, hide from search) with a live Google-style preview. Links and
+  buttons can point at any page of the site. The Publish dialog sets the site
+  address, language and favicon, shows a checklist, downloads the whole site
+  as a ZIP with sitemap.xml and robots.txt, and explains how to put it online.
 
 ### Fixed
 
