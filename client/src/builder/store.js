@@ -33,6 +33,33 @@ function copySnapshotInto(instances, styles, snap) {
   return map[snap.rootId];
 }
 
+/**
+ * Undo coalescing (docs/superpowers/specs/2026-10-13-undo-coalescing-design.md):
+ * consecutive edits to the same target less than COALESCE_MS apart become ONE undo
+ * step — the burst's first edit records the pre-edit state; later ones update the
+ * present with history paused. Any other recorded step, an undo/redo, a pause or a
+ * different target starts a new step.
+ */
+const COALESCE_MS = 1000;
+let burst = null; // { key, at, last } — `last` = the history entry the burst created
+function coalesce(key, apply) {
+  const t = useBuilder.temporal.getState();
+  const now = Date.now();
+  const last = t.pastStates[t.pastStates.length - 1];
+  const merging = burst && burst.key === key && now - burst.at < COALESCE_MS && last === burst.last && t.futureStates.length === 0;
+  if (merging) {
+    t.pause();
+    try { apply(); } finally { t.resume(); }
+    burst.at = now;
+    return;
+  }
+  apply();
+  const after = useBuilder.temporal.getState().pastStates;
+  const recorded = after[after.length - 1];
+  // Start a burst only if this edit actually recorded a step (no-ops record nothing).
+  burst = recorded && recorded !== last ? { key, at: now, last: recorded } : null;
+}
+
 // In-memory clipboard for copy/paste (a serialized subtree snapshot).
 let clipboardSnap = null;
 export const clipboard = { set: (v) => { clipboardSnap = v; }, get: () => clipboardSnap };
@@ -40,7 +67,10 @@ export const clipboard = { set: (v) => { clipboardSnap = v; }, get: () => clipbo
 /** Document store (instances + styles). Tracked by undo/redo. */
 export const useBuilder = create(
   temporal(
-    (set, get) => ({
+    (set, get) => {
+      // Edits that coalesce into one undo step per burst (see coalesce()).
+      const cset = (key, updater) => coalesce(key, () => set(updater));
+      return {
       project: null,
 
       loadProject(project) {
@@ -49,11 +79,11 @@ export const useBuilder = create(
       },
 
       setName(name) {
-        set((s) => (s.project ? { project: { ...s.project, name } } : s));
+        cset('name', (s) => (s.project ? { project: { ...s.project, name } } : s));
       },
 
       setColorTokens(colors) {
-        set((s) => (s.project ? { project: { ...s.project, tokens: { ...(s.project.tokens || {}), colors } } } : s));
+        cset('tokens', (s) => (s.project ? { project: { ...s.project, tokens: { ...(s.project.tokens || {}), colors } } } : s));
       },
 
       addAsset(name, src) {
@@ -254,7 +284,7 @@ export const useBuilder = create(
 
       /** Set a component's exposed variables ([{id,name,type,default}]). */
       setComponentVariables(compId, variables) {
-        set((s) => {
+        cset(`vars:${compId}`, (s) => {
           if (!s.project || !(s.project.components || {})[compId]) return s;
           const components = { ...s.project.components, [compId]: { ...s.project.components[compId], variables } };
           return { project: { ...s.project, components } };
@@ -287,7 +317,7 @@ export const useBuilder = create(
 
       /** Set one variable override on an instance node (clear with value=undefined). */
       setOverride(instId, varId, value) {
-        set((s) => {
+        cset(`override:${instId}:${varId}`, (s) => {
           if (!s.project) return s;
           const inst = s.project.instances[instId];
           if (!inst) return s;
@@ -341,11 +371,11 @@ export const useBuilder = create(
       },
       /** Merge site-wide publishing settings (url, lang, favicon — validated by seo.js on export). */
       setSite(patch) {
-        set((s) => (s.project ? { project: { ...s.project, site: { ...(s.project.site || {}), ...patch } } } : s));
+        cset(`site:${Object.keys(patch).sort().join(',')}`, (s) => (s.project ? { project: { ...s.project, site: { ...(s.project.site || {}), ...patch } } } : s));
       },
       /** Merge one page's SEO settings (title, description, image, noindex). */
       setPageSeo(pageId, patch) {
-        set((s) => (s.project ? {
+        cset(`seo:${pageId}:${Object.keys(patch).sort().join(',')}`, (s) => (s.project ? {
           project: { ...s.project, pages: s.project.pages.map((p) => (p.id === pageId ? { ...p, seo: { ...(p.seo || {}), ...patch } } : p)) },
         } : s));
       },
@@ -354,7 +384,7 @@ export const useBuilder = create(
       },
 
       setProp(id, prop, value) {
-        set((s) => {
+        cset(`prop:${id}:${prop}`, (s) => {
           if (!s.project) return s;
           const inst = { ...s.project.instances[id], props: { ...s.project.instances[id].props, [prop]: value } };
           return { project: { ...s.project, instances: { ...s.project.instances, [id]: inst } } };
@@ -385,7 +415,7 @@ export const useBuilder = create(
 
       /** Replace the site theme (live colour / font / radius edits). */
       setTheme(theme) {
-        set((s) => (s.project ? { project: { ...s.project, theme: normalizeTheme(theme) } } : s));
+        cset('theme', (s) => (s.project ? { project: { ...s.project, theme: normalizeTheme(theme) } } : s));
       },
 
       /**
@@ -402,7 +432,7 @@ export const useBuilder = create(
 
       /** Set or clear one CSS declaration for an instance at a breakpoint. */
       setStyle(id, breakpoint, prop, value) {
-        set((s) => {
+        cset(`style:${id}:${breakpoint}:${prop}`, (s) => {
           if (!s.project) return s;
           const styles = { ...s.project.styles };
           const cur = { ...(styles[id] || {}) };
@@ -414,7 +444,8 @@ export const useBuilder = create(
           return { project: { ...s.project, styles } };
         });
       },
-    }),
+    };
+    },
     // equality: a refused/no-op action returns the same project object, so it records no undo step.
     { limit: 100, partialize: (s) => ({ project: s.project }), equality: (a, b) => a.project === b.project },
   ),

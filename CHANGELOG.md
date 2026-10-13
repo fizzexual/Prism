@@ -54,6 +54,9 @@ below are grouped by date and built from the git history.
 ### Fixed
 
 - The colour picker closed every time you clicked its gradient.
+- Undo now reverts a whole typed word or slider drag in one step instead of
+  one character or tick at a time (edits to the same field less than a second
+  apart are grouped).
 
 ## 2026-06-22
 
