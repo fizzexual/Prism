@@ -195,3 +195,21 @@ describe('addPageWithSections (starter pages)', () => {
     expect(ids(a).filter((x) => ids(b).includes(x))).toEqual([]);
   });
 });
+
+describe('publishing settings', () => {
+  it('setSite merges site settings in one undo step', () => {
+    const n = history();
+    B().setSite({ url: 'https://acme.example' });
+    B().setSite({ lang: 'bg' });
+    expect(P().site).toMatchObject({ url: 'https://acme.example', lang: 'bg' });
+    expect(history()).toBe(n + 2);
+  });
+
+  it('setPageSeo merges into one page only', () => {
+    const pid = B().addPage('About');
+    B().setPageSeo(pid, { title: 'About us' });
+    B().setPageSeo(pid, { description: 'Who we are' });
+    expect(P().pages.find((p) => p.id === pid).seo).toEqual({ title: 'About us', description: 'Who we are' });
+    expect(P().pages[0].seo).toBeUndefined();
+  });
+});

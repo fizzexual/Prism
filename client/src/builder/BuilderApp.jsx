@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useStore } from 'zustand';
-import { Undo2, Redo2, Monitor, Tablet, Smartphone, Eye, Download, Moon, Sun } from 'lucide-react';
+import { Undo2, Redo2, Monitor, Tablet, Smartphone, Eye, Download, Moon, Sun, Rocket } from 'lucide-react';
 import { useBuilder, useUI } from './store.js';
 import { defaultProject, findParentId, getActivePage } from './model.js';
 import { COMPONENTS, COMPONENT_LIST, isContainer } from './components.jsx';
@@ -18,6 +18,7 @@ import { getLastId, loadLocal, getServerId, normalizeProject } from './persist.j
 import { handleShortcut } from './actions.js';
 import ContextMenu from './ContextMenu.jsx';
 import SectionLibrary from './panels/SectionLibrary.jsx';
+import PublishDialog from './PublishDialog.jsx';
 
 const BP_ICONS = { base: Monitor, tablet: Tablet, mobile: Smartphone };
 
@@ -50,6 +51,7 @@ export default function BuilderApp() {
   const past = useStore(useBuilder.temporal, (s) => s.pastStates.length);
   const future = useStore(useBuilder.temporal, (s) => s.futureStates.length);
   const [leftTab, setLeftTab] = useState('add');
+  const [publishing, setPublishing] = useState(false);
   const [dark, setDark] = useState(() => { try { return localStorage.getItem('prismx:dark') === '1'; } catch { return false; } });
   useAutosave();
 
@@ -116,6 +118,10 @@ export default function BuilderApp() {
           className="flex items-center gap-1.5 rounded-md bg-neutral-900 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-neutral-700">
           <Download size={14} /> Export
         </button>
+        <button onClick={() => setPublishing(true)}
+          className="flex items-center gap-1.5 rounded-md bg-indigo-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-indigo-700">
+          <Rocket size={14} /> Publish
+        </button>
       </header>
 
       <div className="flex min-h-0 flex-1">
@@ -176,6 +182,7 @@ export default function BuilderApp() {
         )}
       </div>
       <ContextMenu />
+      {publishing && <PublishDialog onClose={() => setPublishing(false)} />}
     </div>
   );
 }

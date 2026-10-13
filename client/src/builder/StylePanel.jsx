@@ -16,6 +16,7 @@ import { StateSwitch, StateEffects } from './panels/StatesSection.jsx';
 import { stateEditKey } from './stateStyles.js';
 import AnimationSection from './panels/AnimationSection.jsx';
 import ThreeSection from './panels/ThreeSection.jsx';
+import LinkTarget from './panels/LinkTarget.jsx';
 import { FONT_OPTIONS } from './fonts.js';
 import ThemePanel from './panels/ThemePanel.jsx';
 import { Section, Field, LengthField, PxField, SelectField, Segmented, ColorField, TextField, TextAreaField, ToggleField } from './controls.jsx';
@@ -58,7 +59,7 @@ function ContentSection({ inst }) {
     return (
       <Section title="Content">
         <Field label="Text"><TextField value={inst.props.text} onChange={(v) => setProp('text', v)} /></Field>
-        <Field label="URL"><TextField value={inst.props.href} onChange={(v) => setProp('href', v)} placeholder="https://…" /></Field>
+        <Field label="Links to"><LinkTarget value={inst.props.href} onChange={(v) => setProp('href', v)} /></Field>
       </Section>
     );
   }
@@ -69,6 +70,7 @@ function ContentSection({ inst }) {
           <Field label="Level"><SelectField value={inst.props.level || 'h2'} onChange={(v) => setProp('level', v)} options={HEADING_LEVELS} /></Field>
         )}
         <TextAreaField value={inst.props.text} onChange={(v) => setProp('text', v)} placeholder="Text…" />
+        {c === 'Button' && <Field label="Links to"><LinkTarget value={inst.props.href || ''} onChange={(v) => setProp('href', v)} allowNone /></Field>}
       </Section>
     );
   }

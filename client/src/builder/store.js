@@ -339,6 +339,16 @@ export const useBuilder = create(
           return { project: { ...s.project, instances, styles, pages: s.project.pages.filter((p) => p.id !== pageId) } };
         });
       },
+      /** Merge site-wide publishing settings (url, lang, favicon — validated by seo.js on export). */
+      setSite(patch) {
+        set((s) => (s.project ? { project: { ...s.project, site: { ...(s.project.site || {}), ...patch } } } : s));
+      },
+      /** Merge one page's SEO settings (title, description, image, noindex). */
+      setPageSeo(pageId, patch) {
+        set((s) => (s.project ? {
+          project: { ...s.project, pages: s.project.pages.map((p) => (p.id === pageId ? { ...p, seo: { ...(p.seo || {}), ...patch } } : p)) },
+        } : s));
+      },
       renamePage(pageId, name) {
         set((s) => (s.project ? { project: { ...s.project, pages: s.project.pages.map((p) => (p.id === pageId ? { ...p, name } : p)) } } : s));
       },
