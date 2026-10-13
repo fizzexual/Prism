@@ -6,6 +6,7 @@ import { normalizeMotion, motionAttrs, motionCss, MOTION_RUNTIME } from './motio
 import { usedGoogleFonts, googleFontsHref } from './fonts.js';
 import { themeCss, themeFonts } from './theme.js';
 import { mountScene, normalize3D } from './scene3d.js';
+import { headTags, normalizeSite, resolvePageHref, sitemapXml, robotsTxt } from './seo.js';
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const escAttr = (s) => esc(s).replace(/"/g, '&quot;');
@@ -121,8 +122,13 @@ function renderNode(instances, id, indent, components = {}, resolve = null, open
       .join('\n');
     return `${indent}<${def.tag} class="${c}"${styleAttr}>\n${kids}\n${indent}</${def.tag}>`;
   }
-  const attrs = inst.component === 'Link' ? ` href="${escAttr(safeHref(inst.props.href))}"` : '';
   const text = boundText != null ? boundText : (inst.props.text || '');
+  const href = (h) => escAttr(safeHref(resolveLink(h)));
+  // A button with a link is exported as a real link that keeps the button's look (a.pm-btn).
+  if (inst.component === 'Button' && inst.props.href) {
+    return `${indent}<a class="${c} pm-btn"${styleAttr} href="${href(inst.props.href)}">${esc(text)}</a>`;
+  }
+  const attrs = inst.component === 'Link' ? ` href="${href(inst.props.href)}"` : '';
   const tag = tagFor(inst);
   return `${indent}<${tag} class="${c}"${styleAttr}${attrs}>${esc(text)}</${tag}>`;
 }
@@ -152,16 +158,30 @@ function fontLinks(project) {
 `;
 }
 
+// Resolves `page:<id>` links while a page is being exported (set by exportHtmlForPage; export is synchronous).
+let resolveLink = (h) => h;
+
+// Linked buttons are exported as <a>; make them look and line up like buttons.
+const LINK_BUTTON_CSS = 'a.pm-btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; cursor: pointer; }';
+
 /** Build a self-contained HTML document (CSS inlined) for one page. */
 export function exportHtmlForPage(project, page) {
-  const body = renderNode(project.instances, page.rootId, '    ', project.components || {});
-  const css = `*,*::before,*::after { box-sizing: border-box; }\nbody { margin: 0; }\n${themeCss(project.theme)}\n${generateCss(project.styles, (id) => `.${cls(id)}`)}`;
+  const files = pageFileNames(project.pages);
+  const file = files[project.pages.indexOf(page)] || 'index.html';
+  resolveLink = (h) => resolvePageHref(h, project, files);
+  let body;
+  try {
+    body = renderNode(project.instances, page.rootId, '    ', project.components || {});
+  } finally {
+    resolveLink = (h) => h;
+  }
+  const css = `*,*::before,*::after { box-sizing: border-box; }\nbody { margin: 0; }\n${LINK_BUTTON_CSS}\n${themeCss(project.theme)}\n${generateCss(project.styles, (id) => `.${cls(id)}`)}`;
   return `<!doctype html>
-<html lang="en">
+<html lang="${escAttr(normalizeSite(project.site).lang)}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${esc(project.name)} — ${esc(page.name)}</title>
+${headTags(project, page, file)}
 ${fontLinks(project)}  <style>
 ${css}
   </style>
@@ -176,6 +196,16 @@ ${body.includes('data-prism-3d=') ? THREE_SCRIPT : ''}</body>
 /** Self-contained HTML for the first page (used by tests / single-page export). */
 export function exportHtml(project) {
   return exportHtmlForPage(project, project.pages[0]);
+}
+
+/** Every file of the publishable site: one HTML per page, sitemap.xml (with a site address) and robots.txt. */
+export function buildSiteFiles(project) {
+  const files = pageFileNames(project.pages);
+  const out = project.pages.map((p, i) => ({ name: files[i], content: exportHtmlForPage(project, p) }));
+  const sitemap = sitemapXml(project, files);
+  if (sitemap) out.push({ name: 'sitemap.xml', content: sitemap });
+  out.push({ name: 'robots.txt', content: robotsTxt(project) });
+  return out;
 }
 
 function triggerDownload(blob, filename) {

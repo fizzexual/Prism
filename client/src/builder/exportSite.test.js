@@ -199,3 +199,46 @@ describe('exportHtml with a site theme', () => {
     expect(html).toContain('--pm-primary: #4f46e5;');
   });
 });
+
+describe('publishing in the export', async () => {
+  const { buildSiteFiles } = await import('./exportSite.js');
+  const site = () => {
+    const p = project({ l: { component: 'Link', props: { text: 'About', href: 'page:about' }, children: [] }, b: { component: 'Button', props: { text: 'Go', href: 'page:about' }, children: [] }, plain: { component: 'Button', props: { text: 'Stay' }, children: [] } });
+    p.pages = [{ id: 'home', name: 'Home', rootId: 'root', seo: { title: 'Acme', description: 'Rockets.' } }, { id: 'about', name: 'About', rootId: 'aboutRoot' }];
+    p.instances.aboutRoot = { component: 'Box', props: {}, children: [] };
+    p.site = { url: 'https://acme.example', lang: 'bg' };
+    return p;
+  };
+
+  it('writes the language, SEO and social tags into the head', () => {
+    const html = exportHtml(site());
+    expect(html).toContain('<html lang="bg">');
+    expect(html).toContain('<title>Acme</title>');
+    expect(html).toContain('<link rel="canonical" href="https://acme.example/" />');
+    expect(html).toContain('<meta property="og:description" content="Rockets." />');
+  });
+
+  it('links to other pages by their exported file', () => {
+    const html = exportHtml(site());
+    expect(html).toMatch(/<a class="c-l" href="about\.html">About<\/a>/);
+  });
+
+  it('a button with a link becomes a real link that keeps the button look; without a link it stays a button', () => {
+    const html = exportHtml(site());
+    expect(html).toMatch(/<a class="c-b pm-btn" href="about\.html">Go<\/a>/);
+    expect(html).toMatch(/<button class="c-plain"[^>]*>Stay<\/button>/);
+    expect(html).toContain('a.pm-btn {');
+  });
+
+  it('buildSiteFiles returns every page plus sitemap.xml and robots.txt', () => {
+    const files = buildSiteFiles(site());
+    expect(files.map((f) => f.name)).toEqual(['index.html', 'about.html', 'sitemap.xml', 'robots.txt']);
+    expect(files.find((f) => f.name === 'sitemap.xml').content).toContain('https://acme.example/about.html');
+  });
+
+  it('without a site address there is no sitemap, but robots.txt is still there', () => {
+    const p = site();
+    p.site = {};
+    expect(buildSiteFiles(p).map((f) => f.name)).toEqual(['index.html', 'about.html', 'robots.txt']);
+  });
+});
