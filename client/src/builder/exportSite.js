@@ -6,7 +6,7 @@ import { normalizeMotion, motionAttrs, motionCss, MOTION_RUNTIME } from './motio
 import { usedGoogleFonts, googleFontsHref } from './fonts.js';
 import { themeCss, themeFonts } from './theme.js';
 import { mountScene, normalize3D } from './scene3d.js';
-import { headTags, normalizeSite, resolvePageHref, sitemapXml, robotsTxt } from './seo.js';
+import { headTags, normalizeSite, resolvePageHref, sitemapXml, robotsTxt, pageFileNames } from './seo.js';
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const escAttr = (s) => esc(s).replace(/"/g, '&quot;');
@@ -135,18 +135,7 @@ function renderNode(instances, id, indent, components = {}, resolve = null, open
 
 const slugify = (s) => String(s || 'site').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'site';
 
-/** One unique file name per page; the first page is always index.html. */
-export function pageFileNames(pages) {
-  const used = new Set(['index']);
-  return pages.map((p, i) => {
-    if (i === 0) return 'index.html';
-    const base = String(p.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `page-${i + 1}`;
-    let name = base;
-    for (let n = 2; used.has(name); n++) name = `${base}-${n}`;
-    used.add(name);
-    return `${name}.html`;
-  });
-}
+export { pageFileNames }; // lives in seo.js so the editor can use it without loading the exporter
 
 /** <link> tags for the curated Google Fonts the site uses (empty when none). */
 function fontLinks(project) {

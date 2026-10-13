@@ -13,6 +13,19 @@ const FAVICON_DATA = /^data:image\/(png|x-icon|vnd\.microsoft\.icon|svg\+xml|gif
 const MAX_FAVICON_CHARS = Math.ceil((100 * 1024 * 4) / 3); // 100 KB as base64
 const SITE_PATH = /^\/[A-Za-z0-9._~\-/]*$/;
 
+/** One unique file name per page; the first page is always index.html. */
+export function pageFileNames(pages) {
+  const used = new Set(['index']);
+  return pages.map((p, i) => {
+    if (i === 0) return 'index.html';
+    const base = String(p.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `page-${i + 1}`;
+    let name = base;
+    for (let n = 2; used.has(name); n++) name = `${base}-${n}`;
+    used.add(name);
+    return `${name}.html`;
+  });
+}
+
 export const TITLE_MAX = 70;
 export const DESCRIPTION_MAX = 200;
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, Trash2, FileText } from 'lucide-react';
 import { useBuilder, useUI } from './store.js';
 import { getActivePage } from './model.js';
+import PageSeo from './panels/PageSeo.jsx';
 
 export default function PagesPanel() {
   const project = useBuilder((s) => s.project);
@@ -22,14 +23,14 @@ export default function PagesPanel() {
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col p-2">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-2 scroll-thin">
       <div className="flex items-center justify-between px-1 pb-2">
         <span className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">Pages</span>
         <button onClick={add} className="grid h-5 w-5 place-items-center rounded-sm text-neutral-400 hover:bg-neutral-100 hover:text-indigo-600" title="Add page">
           <Plus size={13} />
         </button>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto scroll-thin">
+      <div className="max-h-56 shrink-0 overflow-y-auto scroll-thin">
         {project.pages.map((p) => (
           <div
             key={p.id}
@@ -59,7 +60,8 @@ export default function PagesPanel() {
           </div>
         ))}
       </div>
-      <p className="px-1 pt-2 text-[10px] leading-relaxed text-neutral-400">Double-click a page to rename it.</p>
+      <p className="px-1 pb-3 pt-2 text-[10px] leading-relaxed text-neutral-400">Double-click a page to rename it.</p>
+      <PageSeo project={project} page={active} />
     </div>
   );
 }
